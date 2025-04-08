@@ -1,7 +1,7 @@
 // src/components/header/Header.jsx
 import React from 'react';
 import { Link } from 'react-router-dom'
-import { logoLinkStyle, navbarButtonStyle } from "../../assets/index";
+import { logoLinkStyle} from "../../assets/index";
 import { signOut } from '@firebase/auth';
 import { useSelector, useDispatch } from 'react-redux';
 import { Logout } from '../../store/authSlice';

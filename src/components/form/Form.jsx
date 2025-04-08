@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { FaCamera, FaTimes } from 'react-icons/fa';
 
 function Form({
     data,
@@ -7,15 +8,47 @@ function Form({
     pushData,
 }) {
     const [imagePreview, setImagePreview] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef(null);
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
+    const handleImageChange = (file) => {
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleImageChange(file);
+        }
+    };
+
+    const handleFileInput = (e) => {
+        const file = e.target.files[0];
+        handleImageChange(file);
+    };
+
+    const removeImage = () => {
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -107,19 +140,34 @@ function Form({
                     {imagePreview ? (
                         <div className='image-preview-container'>
                             <img src={imagePreview} alt="Preview" />
-                            <span className="updated-accent-text">Change Image</span>
+                            <button
+                                type="button"
+                                className='remove-image-button'
+                                onClick={removeImage}
+                            >
+                                <FaTimes />
+                            </button>
                         </div>
                     ) : (
-                        <div className='image-upload-button'>
-                            <span className="updated-accent-text">Upload Animal Photo</span>
+                        <div
+                            className={`image-upload-button ${isDragging ? 'drag-over' : ''}`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <FaCamera className='image-upload-icon' />
+                            <span className='image-upload-text'>Upload Animal Photo</span>
+                            <span className='image-upload-hint'>Click or drag & drop to upload</span>
+                            <input
+                                ref={fileInputRef}
+                                type='file'
+                                accept='image/*'
+                                onChange={handleFileInput}
+                                className='image-upload-input'
+                            />
                         </div>
                     )}
-                    <input
-                        type='file'
-                        accept='image/*'
-                        onChange={handleImageChange}
-                        className='image-upload-input'
-                    />
                 </label>
             </motion.div>
 
