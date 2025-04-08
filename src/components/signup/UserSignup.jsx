@@ -8,6 +8,7 @@ import ErrorDialog from '../ErrorDialog';
 import { useDispatch } from 'react-redux';
 import { Login as LogIn } from "../../store/authSlice";
 import { collection, addDoc } from "firebase/firestore";
+import { Header, Footer } from '../../components/index.js';
 
 function Signup() {
   const navigate = useNavigate();
@@ -133,204 +134,208 @@ function Signup() {
   }
 
   return (
-    <motion.div
-      className='container'
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className='updated-page-container'>
+      <Header />
       <motion.div
-        className='signup-container'
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
+        className='container'
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        <motion.h2
-          className='signup-heading'
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.3 }}
+        <motion.div
+          className='signup-container'
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
         >
-          User Signup
-        </motion.h2>
-        <motion.form
-          onSubmit={handleSubmit}
-          className='signup-form-container'
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="form-role-selection"
+          <motion.h2
+            className='signup-heading'
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3 }}
           >
-            <label className="role-label">Register as:</label>
-            <div className="role-options">
-              <label className={`role-option ${userInfo.role === 'user' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="role"
-                  value="user"
-                  checked={userInfo.role === 'user'}
-                  onChange={handleChange}
-                />
-                <span>User</span>
-              </label>
-              <label className={`role-option ${userInfo.role === 'admin' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="role"
-                  value="admin"
-                  checked={userInfo.role === 'admin'}
-                  onChange={handleChange}
-                />
-                <span>Admin</span>
-              </label>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.55 }}
+            User Signup
+          </motion.h2>
+          <motion.form
+            onSubmit={handleSubmit}
+            className='signup-form-container'
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
           >
-            <input
-              type='text'
-              name="name"
-              className='name'
-              placeholder='Full Name *'
-              onChange={handleChange}
-              value={userInfo.name}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            <input
-              type='tel'
-              name="contact"
-              className='contact'
-              placeholder='Contact Number *'
-              onChange={handleChange}
-              value={userInfo.contact}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.65 }}
-          >
-            <input
-              type='email'
-              name="email"
-              className='email'
-              placeholder='Email Address *'
-              onChange={handleChange}
-              value={userInfo.email}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.75 }}
-            className="image-upload-container"
-          >
-            <label className="image-upload-label">Profile Picture (optional)</label>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              className="image-upload-input"
-              onChange={handleFileChange}
-            />
-            <div
-              className="image-upload-button"
-              onClick={() => fileInputRef.current?.click()}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="form-role-selection"
             >
-              {avatarPreview ? 'Change Image' : 'Click to upload profile picture'}
-            </div>
-            {avatarPreview && (
-              <div className="image-preview-container">
-                <img src={avatarPreview} alt="Avatar Preview" />
-                <button
-                  type="button"
-                  className="remove-image-button"
-                  onClick={removeImage}
-                >
-                  ×
-                </button>
+              <label className="role-label">Register as:</label>
+              <div className="role-options">
+                <label className={`role-option ${userInfo.role === 'user' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="user"
+                    checked={userInfo.role === 'user'}
+                    onChange={handleChange}
+                  />
+                  <span>User</span>
+                </label>
+                <label className={`role-option ${userInfo.role === 'admin' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="role"
+                    value="admin"
+                    checked={userInfo.role === 'admin'}
+                    onChange={handleChange}
+                  />
+                  <span>Admin</span>
+                </label>
               </div>
-            )}
-          </motion.div>
+            </motion.div>
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.75 }}
-            className="form-gender-selection"
-          >
-            <label className="gender-label">Gender *</label>
-            <select
-              name="gender"
-              className="gender-select"
-              value={userInfo.gender}
-              onChange={handleChange}
-              required
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.55 }}
             >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </motion.div>
+              <input
+                type='text'
+                name="name"
+                className='name'
+                placeholder='Full Name *'
+                onChange={handleChange}
+                value={userInfo.name}
+                required
+              />
+            </motion.div>
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            <input
-              type='password'
-              name="password"
-              className='password'
-              placeholder='Password *'
-              onChange={handleChange}
-              value={userInfo.password}
-              required
-            />
-          </motion.div>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <input
+                type='tel'
+                name="contact"
+                className='contact'
+                placeholder='Contact Number *'
+                onChange={handleChange}
+                value={userInfo.contact}
+                required
+              />
+            </motion.div>
 
-          <motion.button
-            type='submit'
-            className='signup-button'
-            onClick={signup}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.65 }}
+            >
+              <input
+                type='email'
+                name="email"
+                className='email'
+                placeholder='Email Address *'
+                onChange={handleChange}
+                value={userInfo.email}
+                required
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.75 }}
+              className="image-upload-container"
+            >
+              <label className="image-upload-label">Profile Picture (optional)</label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="image-upload-input"
+                onChange={handleFileChange}
+              />
+              <div
+                className="image-upload-button"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {avatarPreview ? 'Change Image' : 'Click to upload profile picture'}
+              </div>
+              {avatarPreview && (
+                <div className="image-preview-container">
+                  <img src={avatarPreview} alt="Avatar Preview" />
+                  <button
+                    type="button"
+                    className="remove-image-button"
+                    onClick={removeImage}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.75 }}
+              className="form-gender-selection"
+            >
+              <label className="gender-label">Gender *</label>
+              <select
+                name="gender"
+                className="gender-select"
+                value={userInfo.gender}
+                onChange={handleChange}
+                required
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <input
+                type='password'
+                name="password"
+                className='password'
+                placeholder='Password *'
+                onChange={handleChange}
+                value={userInfo.password}
+                required
+              />
+            </motion.div>
+
+            <motion.button
+              type='submit'
+              className='signup-button'
+              onClick={signup}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Sign Up
+            </motion.button>
+          </motion.form>
+          <motion.p
+            className='login-text'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
           >
-            Sign Up
-          </motion.button>
-        </motion.form>
-        <motion.p
-          className='login-text'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-        >
-          Already have an account?
-          <Link to="/user-login" style={styledLink}>Login</Link>
-        </motion.p>
+            Already have an account?
+            <Link to="/user-login" style={styledLink}>Login</Link>
+          </motion.p>
+        </motion.div>
       </motion.div>
+      <Footer />
       {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
-    </motion.div>
+    </div>
   )
 }
 

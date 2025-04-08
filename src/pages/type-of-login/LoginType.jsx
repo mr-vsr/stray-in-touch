@@ -15,16 +15,6 @@ function LoginType() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className='type-of-login-heading-container'>
-                    <motion.h1
-                        className='type-of-login-heading updated-heading'
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                    >
-                        StrayInTouch
-                    </motion.h1>
-                </div>
                 <motion.div
                     className='type-of-login-container-top'
                     initial={{ scale: 0.9, opacity: 0 }}
