@@ -295,7 +295,7 @@ function NgoSignup() {
 
           <motion.button
             type='submit'
-            className='signup-button'
+            className='signup-button updated-button'
             disabled={isSubmitting}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

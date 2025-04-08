@@ -279,7 +279,7 @@ function AdminSignup() {
 
                         <motion.button
                             type='button'
-                            className='signup-button'
+                            className='signup-button updated-button'
                             onClick={signup}
                             disabled={isSubmitting}
                             whileHover={{ scale: 1.05 }}
