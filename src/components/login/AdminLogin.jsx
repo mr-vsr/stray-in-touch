@@ -7,7 +7,6 @@ import { useDispatch } from 'react-redux';
 import { Login as LogIn, Logout } from "../../store/authSlice";
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
-import { Header, Footer } from '../index';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 function AdminLogin() {
@@ -87,7 +86,6 @@ function AdminLogin() {
 
     return (
         <div className="updated-page-container">
-            <Header />
             <motion.div
                 className='container'
                 initial={{ opacity: 0 }}
@@ -165,7 +163,6 @@ function AdminLogin() {
                 </motion.div>
                 {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
             </motion.div>
-            <Footer />
         </div>
     )
 }
