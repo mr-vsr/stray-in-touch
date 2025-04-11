@@ -17,6 +17,7 @@ import UserSignup from './signup/UserSignup';
 import WhatWedo from './herosection/WhatWedo';
 import AdminLogin from './login/AdminLogin';
 import AdminSignup from './signup/AdminSignup';
+import Loader from './loader/Loader';
 
 export {
     Cards,
@@ -35,5 +36,6 @@ export {
     UserSignup,
     WhatWedo,
     AdminLogin,
-    AdminSignup
+    AdminSignup,
+    Loader
 };

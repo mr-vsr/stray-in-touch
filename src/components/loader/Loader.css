@@ -1,0 +1,145 @@
+/* Base Loader Container */
+.loader-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* Fullscreen Variant */
+.loader-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--background-dark);
+    z-index: 9999;
+}
+
+/* Transparent Variant */
+.loader-container.transparent {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+/* Loader Types */
+.loader-container.type-default {
+    min-height: 200px;
+}
+
+.loader-container.type-button {
+    padding: 0;
+    min-height: unset;
+}
+
+.loader-container.type-inline {
+    display: inline-flex;
+    padding: 0;
+    min-height: unset;
+}
+
+.loader-container.type-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 10;
+}
+
+/* Loader Component */
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Spinner Sizes */
+.size-small .spinner {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+.size-medium .spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+}
+
+.size-large .spinner {
+    width: 60px;
+    height: 60px;
+    border-width: 4px;
+}
+
+/* Spinner Animation */
+.spinner {
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--accent-color);
+    border-right-color: var(--accent-color);
+    animation: spin 0.8s linear infinite;
+    background: transparent;
+}
+
+/* Gradient Border Animation */
+.spinner::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--primary-color);
+    animation: spin 1.2s linear infinite reverse;
+}
+
+/* Loader Text */
+.loader-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+    text-align: center;
+}
+
+.size-small .loader-text {
+    font-size: 0.8rem;
+}
+
+.size-large .loader-text {
+    font-size: 1rem;
+}
+
+/* Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Button Loading State */
+button.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+button.loading .spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+button.loading .button-content {
+    opacity: 0;
+} 
