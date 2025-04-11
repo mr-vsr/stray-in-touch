@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../auth/firebase-config";
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate} from 'react-router-dom';
 import { styledLink } from '../../assets';
 import { useDispatch } from 'react-redux';
 import { Login as LogIn, Logout } from "../../store/authSlice";
@@ -12,7 +12,6 @@ import { Header, Footer } from '../index';
 function Login() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const location = useLocation();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -41,12 +40,7 @@ function Login() {
                         userData: user,
                         isLoggedIn: true
                     }));
-                    const fromDonations = location.state?.from === 'donations';
-                    if (fromDonations) {
-                        navigate('/donations');
-                    } else {
-                        navigate('/ngo-homepage');
-                    }
+                    navigate('/ngo-homepage');
                 }
             })
             .catch((error) => {
@@ -61,19 +55,14 @@ function Login() {
                     userData: user,
                     isLoggedIn: true
                 }));
-                const fromDonations = location.state?.from === 'donations';
-                if (fromDonations) {
-                    navigate('/donations');
-                } else {
-                    navigate('/ngo-homepage');
-                }
+                navigate('/ngo-homepage');
             } else {
                 dispatch(Logout());
             }
         });
 
         return () => unsubscribe();
-    }, [dispatch, navigate, location]);
+    }, [dispatch, navigate]);
 
     return (
         <div className="updated-page-container">

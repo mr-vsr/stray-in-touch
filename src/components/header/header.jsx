@@ -137,15 +137,9 @@ function Header() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {isLoggedIn ? (
               <Link to="/donations" className="navbar-donate-button updated-button" style={{ textDecoration: 'none' }}>
                 Donate
               </Link>
-            ) : (
-              <Link to="/type-of-login" state={{ from: 'donations' }} className="navbar-donate-button updated-button" style={{ textDecoration: 'none' }}>
-                Donate
-              </Link>
-            )}
           </motion.div>
         </div>
       </div>
