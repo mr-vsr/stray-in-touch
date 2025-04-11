@@ -1,88 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
 import { styledLink } from '../../assets';
-import { useDispatch } from 'react-redux';
-import { Login as LogIn, Logout } from "../../store/authSlice";
 import { motion } from 'framer-motion';
+import { collection, query, where, getDocs } from "firebase/firestore";
 import ErrorDialog from '../ErrorDialog';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useDispatch } from 'react-redux';
+import { Login } from "../../store/authSlice";
 
-function Login() {
-    const dispatch = useDispatch();
+function NgoLogin() {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [loginInfo, setLoginInfo] = useState({
+        email: "",
+        password: ""
+    });
+
     const [error, setError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setLoginInfo(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-    }
+    };
 
-    const login = async () => {
-        if (!email || !password) {
-            setError({ code: 'auth/missing-credentials' });
+    const login = async (e) => {
+        e.preventDefault();
+
+        if (!loginInfo.email || !loginInfo.password) {
+            setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
             return;
         }
 
-        if (password.length < 6) {
-            setError({ code: 'auth/weak-password' });
-            return;
-        }
+        setIsSubmitting(true);
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, loginInfo.email, loginInfo.password);
             const user = userCredential.user;
 
-            // Check if user exists in ngos collection
-            const ngosRef = collection(db, 'ngos');
-            const q = query(ngosRef, where('uid', '==', user.uid));
+            // Check if user exists in the NgoInfo collection
+            const q = query(
+                collection(db, "NgoInfo"),
+                where("uid", "==", user.uid)
+            );
+            
             const querySnapshot = await getDocs(q);
-
             if (querySnapshot.empty) {
-                setError({ code: 'auth/wrong-login-type', message: 'This login is only for NGOs.' });
+                // User exists in auth but not in NgoInfo collection
                 await auth.signOut();
+                setError({ 
+                    code: 'auth/not-authorized', 
+                    message: 'You are not authorized as an NGO. Please sign up as an NGO first.' 
+                });
                 return;
             }
 
-            dispatch(LogIn({
-                userData: user,
+            // Get the NGO data
+            const ngoData = querySnapshot.docs[0].data();
+            
+            // Login the user with NGO role
+            dispatch(Login({
+                userData: {
+                    ...user,
+                    role: "ngo",
+                    ngoData: ngoData
+                },
                 isLoggedIn: true
             }));
-            navigate('/ngo-homepage');
+
+            // Navigate to NGO homepage
+            navigate("/ngo-homepage");
         } catch (error) {
+            console.error("Error during login:", error);
             setError(error);
+        } finally {
+            setIsSubmitting(false);
         }
-    }
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Check if user exists in ngos collection
-                const ngosRef = collection(db, 'ngos');
-                const q = query(ngosRef, where('uid', '==', user.uid));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    await auth.signOut();
-                    dispatch(Logout());
-                    return;
-                }
-
-                dispatch(LogIn({
-                    userData: user,
-                    isLoggedIn: true
-                }));
-                navigate('/ngo-homepage');
-            } else {
-                dispatch(Logout());
-            }
-        });
-
-        return () => unsubscribe();
-    }, [dispatch, navigate]);
+    };
 
     return (
         <div className="updated-page-container">
@@ -120,13 +123,15 @@ function Login() {
                         >
                             <input
                                 type='email'
-                                className='email updated-text'
-                                placeholder='E-mail'
-                                onChange={(event) => setEmail(event.target.value)}
-                                value={email}
+                                name="email"
+                                className='email'
+                                placeholder='Email Address *'
+                                onChange={handleChange}
+                                value={loginInfo.email}
                                 required
                             />
                         </motion.div>
+
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
@@ -134,21 +139,24 @@ function Login() {
                         >
                             <input
                                 type='password'
-                                className='password updated-text'
-                                placeholder='Password'
-                                onChange={(event) => setPassword(event.target.value)}
-                                value={password}
+                                name="password"
+                                className='password'
+                                placeholder='Password *'
+                                onChange={handleChange}
+                                value={loginInfo.password}
                                 required
                             />
                         </motion.div>
+
                         <motion.button
                             type='submit'
                             className='login-button updated-button'
                             onClick={login}
+                            disabled={isSubmitting}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            Continue
+                            {isSubmitting ? 'Logging in...' : 'Login'}
                         </motion.button>
                     </motion.form>
                     <motion.p
@@ -158,13 +166,13 @@ function Login() {
                         transition={{ delay: 0.7 }}
                     >
                         Don't have an account?
-                        <Link to="/ngo-signup" style={{ ...styledLink, color: '#0062ff' }}>Signup</Link>
+                        <Link to="/ngo-signup" style={{ ...styledLink, color: '#0062ff' }}>Sign up</Link>
                     </motion.p>
                 </motion.div>
                 {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
             </motion.div>
         </div>
-    )
+    );
 }
 
-export default Login
+export default NgoLogin;

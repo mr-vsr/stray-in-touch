@@ -87,6 +87,7 @@ function NgoSignup() {
       // Save NGO data to Firestore
       await addDoc(collection(db, "NgoInfo"), {
         uid: user.uid,
+        role: "ngo",
         name: ngoInfo.name,
         contact: ngoInfo.contact,
         email: ngoInfo.email.toLowerCase(),

@@ -2515,6 +2515,9 @@ body{
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: scaleIn 0.3s ease-out;
+    position: relative;
+    margin: auto;
+    transform: translateY(0);
 }
 
 .help-dialog h3 {

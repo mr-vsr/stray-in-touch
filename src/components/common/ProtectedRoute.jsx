@@ -15,7 +15,7 @@ function ProtectedRoute({ children, allowedRole }) {
                 try {
                     // Query the appropriate collection based on the allowed role
                     const collectionName = allowedRole === 'admin' ? 'admins' : 
-                                        allowedRole === 'ngo' ? 'ngos' : 'users';
+                                        allowedRole === 'ngo' ? 'NgoInfo' : 'users';
                     
                     const q = query(
                         collection(db, collectionName),
@@ -24,7 +24,17 @@ function ProtectedRoute({ children, allowedRole }) {
                     
                     const querySnapshot = await getDocs(q);
                     if (!querySnapshot.empty) {
-                        setUserRole(allowedRole);
+                        // For NGO, also check if the role field exists and is set to "ngo"
+                        if (allowedRole === 'ngo') {
+                            const ngoData = querySnapshot.docs[0].data();
+                            if (ngoData.role === 'ngo') {
+                                setUserRole(allowedRole);
+                            } else {
+                                setUserRole(null);
+                            }
+                        } else {
+                            setUserRole(allowedRole);
+                        }
                     } else {
                         setUserRole(null);
                     }
