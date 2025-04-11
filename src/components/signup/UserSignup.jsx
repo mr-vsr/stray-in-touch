@@ -26,7 +26,6 @@ function Signup() {
   });
 
   const [error, setError] = useState(null);
-  const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -50,14 +49,12 @@ function Signup() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setAvatarFile(file);
       const previewUrl = URL.createObjectURL(file);
       setAvatarPreview(previewUrl);
     }
   };
 
   const removeImage = () => {
-    setAvatarFile(null);
     setAvatarPreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

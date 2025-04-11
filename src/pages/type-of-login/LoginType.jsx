@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { loginTypeButtonNgo, loginTypeButtonUser } from "../../assets/index.js";
 import { HeroImage } from '../../assets';
 import { Header, Footer } from '../../components/index.js';
 import { motion } from 'framer-motion';

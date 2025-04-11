@@ -16,7 +16,7 @@ function AdminSignup() {
     const dispatch = useDispatch();
     const fileInputRef = useRef(null);
 
-    const [adminInfo, setAdminInfo] = useState({
+    const [formData, setFormData] = useState({
         name: "",
         contact: "",
         email: "",
@@ -27,12 +27,11 @@ function AdminSignup() {
 
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setAdminInfo(prev => ({
+        setFormData(prev => ({
             ...prev,
             [name]: value
         }));
@@ -41,14 +40,19 @@ function AdminSignup() {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setAvatarFile(file);
-            const previewUrl = URL.createObjectURL(file);
-            setAvatarPreview(previewUrl);
+            setFormData(prev => ({
+                ...prev,
+                avatar: URL.createObjectURL(file)
+            }));
+            setAvatarPreview(URL.createObjectURL(file));
         }
     };
 
     const removeImage = () => {
-        setAvatarFile(null);
+        setFormData(prev => ({
+            ...prev,
+            avatar: ""
+        }));
         setAvatarPreview(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -67,7 +71,7 @@ function AdminSignup() {
     const signup = async () => {
         // Validate required fields
         const requiredFields = ["name", "contact", "email", "gender", "password"];
-        const missingFields = requiredFields.filter(field => !adminInfo[field]);
+        const missingFields = requiredFields.filter(field => !formData[field]);
 
         if (missingFields.length > 0) {
             setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
@@ -75,13 +79,13 @@ function AdminSignup() {
         }
 
         // Validate email format
-        if (!validateEmail(adminInfo.email)) {
+        if (!validateEmail(formData.email)) {
             setError({ code: 'auth/invalid-email-format', message: 'Please enter a valid email address' });
             return;
         }
 
         // Validate password length
-        if (adminInfo.password.length < 6) {
+        if (formData.password.length < 6) {
             setError({ code: 'auth/weak-password', message: 'Password should be at least 6 characters' });
             return;
         }
@@ -90,7 +94,7 @@ function AdminSignup() {
 
         try {
             // Create user in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, adminInfo.email, adminInfo.password);
+            const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const user = userCredential.user;
 
             if (user) {
@@ -98,18 +102,18 @@ function AdminSignup() {
                 await addDoc(collection(db, "admins"), {
                     uid: user.uid,
                     role: "admin",
-                    name: adminInfo.name,
-                    contact: adminInfo.contact,
-                    email: adminInfo.email.toLowerCase(),
-                    avatar: adminInfo.avatar || null,
-                    gender: adminInfo.gender,
+                    name: formData.name,
+                    contact: formData.contact,
+                    email: formData.email.toLowerCase(),
+                    avatar: formData.avatar || null,
+                    gender: formData.gender,
                     createdAt: new Date()
                 });
 
                 // Update profile in Firebase Auth
                 await updateProfile(user, {
-                    displayName: adminInfo.name,
-                    photoURL: adminInfo.avatar || null
+                    displayName: formData.name,
+                    photoURL: formData.avatar || null
                 });
 
                 // Login the admin
@@ -170,7 +174,7 @@ function AdminSignup() {
                                 className='name'
                                 placeholder='Full Name *'
                                 onChange={handleChange}
-                                value={adminInfo.name}
+                                value={formData.name}
                                 required
                             />
                         </motion.div>
@@ -186,7 +190,7 @@ function AdminSignup() {
                                 className='contact'
                                 placeholder='Contact Number *'
                                 onChange={handleChange}
-                                value={adminInfo.contact}
+                                value={formData.contact}
                                 required
                             />
                         </motion.div>
@@ -202,7 +206,7 @@ function AdminSignup() {
                                 className='email'
                                 placeholder='Email Address *'
                                 onChange={handleChange}
-                                value={adminInfo.email}
+                                value={formData.email}
                                 required
                             />
                         </motion.div>
@@ -251,7 +255,7 @@ function AdminSignup() {
                             <select
                                 name="gender"
                                 className="gender-select"
-                                value={adminInfo.gender}
+                                value={formData.gender}
                                 onChange={handleChange}
                                 required
                             >
@@ -272,7 +276,7 @@ function AdminSignup() {
                                 className='password'
                                 placeholder='Password *'
                                 onChange={handleChange}
-                                value={adminInfo.password}
+                                value={formData.password}
                                 required
                             />
                         </motion.div>

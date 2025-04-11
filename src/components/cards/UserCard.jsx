@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from "firebase/firestore";
-import { HeroImage } from '../../assets';
 import { motion } from 'framer-motion';
 import { db } from '../../auth/firebase-config';
 
@@ -11,7 +10,6 @@ export default function UserCard() {
     const [message, setMessage] = useState('');
     const [connecting, setConnecting] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-    const [number, setNumber] = useState(0);
 
     useEffect(() => {
         const fetchStrays = async () => {
@@ -22,7 +20,6 @@ export default function UserCard() {
                     ...doc.data()
                 }));
                 setStrays(strayData);
-                setNumber(strayData.length);
             } catch (error) {
                 console.error("Error fetching strays: ", error);
             }

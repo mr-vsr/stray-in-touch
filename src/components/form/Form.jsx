@@ -1,63 +1,22 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { FaCamera, FaTimes } from 'react-icons/fa';
 
 function Form({
     data,
     strayInfo,
     pushData,
+    uploadImage,
+    isUploading,
+    isSubmitting,
+    uploadError
 }) {
-    const [imagePreview, setImagePreview] = useState(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const fileInputRef = useRef(null);
-
-    const handleImageChange = (file) => {
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            handleImageChange(file);
-        }
-    };
-
-    const handleFileInput = (e) => {
-        const file = e.target.files[0];
-        handleImageChange(file);
-    };
-
-    const removeImage = () => {
-        setImagePreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
-
     return (
         <motion.form
             className='hero-section-form'
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            onSubmit={pushData}
         >
             <motion.h2
                 className="updated-subheading"
@@ -109,7 +68,7 @@ function Form({
                     type='text'
                     name="location"
                     className='form-input updated-text'
-                    placeholder='Location'
+                    placeholder='Location Description (Give a landmark or street name as well)'
                     onChange={data}
                     value={strayInfo.location}
                     required
@@ -128,57 +87,49 @@ function Form({
                     placeholder='Brief Description'
                     value={strayInfo.description}
                     required
+                    rows={4}
                 />
             </motion.div>
 
             <motion.div
-                className='form-group image-upload-container'
+                className='form-group image-upload-group'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
             >
-                <label className='image-upload-label'>
-                    {imagePreview ? (
-                        <div className='image-preview-container'>
-                            <img src={imagePreview} alt="Preview" />
-                            <button
-                                type="button"
-                                className='remove-image-button'
-                                onClick={removeImage}
-                            >
-                                <FaTimes />
-                            </button>
-                        </div>
-                    ) : (
-                        <div
-                            className={`image-upload-button ${isDragging ? 'drag-over' : ''}`}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <FaCamera className='image-upload-icon' />
-                            <span className='image-upload-text'>Upload Animal Photo</span>
-                            <span className='image-upload-hint'>Click or drag & drop to upload</span>
-                            <input
-                                ref={fileInputRef}
-                                type='file'
-                                accept='image/*'
-                                onChange={handleFileInput}
-                                className='image-upload-input'
-                            />
-                        </div>
-                    )}
-                </label>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => uploadImage(e.target.files)}
+                    className="image-upload-input"
+                    disabled={isUploading || isSubmitting}
+                    aria-label="Upload an image of the stray animal"
+                />
+                {isUploading && (
+                    <div className="upload-loading">
+                        Uploading image... Please wait.
+                    </div>
+                )}
+                {strayInfo.imageUrl && !isUploading && (
+                    <div className="image-preview">
+                        <img src={strayInfo.imageUrl} alt="Preview of uploaded stray animal" />
+                    </div>
+                )}
             </motion.div>
+
+            {uploadError && (
+                <div className="upload-error error-message">
+                    {uploadError}
+                </div>
+            )}
 
             <motion.button
                 type='submit'
                 className='updated-button'
-                onClick={pushData}
+                disabled={isUploading || isSubmitting}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
             >
-                Report
+                {isSubmitting ? 'Submitting...' : 'Report'}
             </motion.button>
         </motion.form>
     )
