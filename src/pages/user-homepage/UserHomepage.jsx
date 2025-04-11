@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header, Footer, DonationsCta, Loader } from '../../components/index.js';
-import { db } from '../../auth/firebase-config';
+import { db } from '../../auth/firebase-config.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
