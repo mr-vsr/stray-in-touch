@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Header, Footer } from '../../components/index';
 import { db, auth } from '../../auth/firebase-config';
 import {Loader} from '../../components/index';
 import {
@@ -191,13 +190,11 @@ const AdminDashboard = () => {
     if (loading) {
         return (
             <div className="admin-dashboard-container">
-                <Header />
                 <Loader 
                     type="default"
                     size="large"
                     text="Loading dashboard data..."
                 />
-                <Footer />
             </div>
         );
     }
@@ -205,7 +202,6 @@ const AdminDashboard = () => {
     if (error) {
         return (
             <div className="admin-dashboard-container">
-                <Header />
                 <div className="admin-dashboard-content">
                     <div className="error-message">
                         <h2>Error Loading Dashboard</h2>
@@ -218,14 +214,12 @@ const AdminDashboard = () => {
                         </button>
                     </div>
                 </div>
-                <Footer />
             </div>
         );
     }
 
     return (
         <div className="admin-dashboard-container">
-            <Header />
             <div className="admin-dashboard-content">
                 <motion.div
                     className="stats-grid"
@@ -409,7 +403,6 @@ const AdminDashboard = () => {
                     </div>
                 )}
             </div>
-            <Footer />
         </div>
     );
 };

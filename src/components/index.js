@@ -18,6 +18,9 @@ import WhatWedo from './herosection/WhatWedo';
 import AdminLogin from './login/AdminLogin';
 import AdminSignup from './signup/AdminSignup';
 import Loader from './loader/Loader';
+import ProtectedRoute from './common/ProtectedRoute';
+import AccessDenied from './common/AccessDenied';
+import ImageUpload from './common/ImageUpload';
 
 export {
     Cards,
@@ -37,5 +40,8 @@ export {
     WhatWedo,
     AdminLogin,
     AdminSignup,
-    Loader
+    Loader,
+    ProtectedRoute,
+    AccessDenied,
+    ImageUpload
 };

@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import '../../App.css';
 import { Vikas, Akshat, Ankit, Sahil } from '../../assets';
-import { Header, Footer } from '../../components/index.js';
 
 const teamMembers = [
     {
@@ -34,7 +33,6 @@ const teamMembers = [
 const About = () => {
     return (
         <div className="updated-page-container">
-            <Header />
             <motion.div
                 className="about-container"
                 initial={{ opacity: 0 }}
@@ -191,7 +189,6 @@ const About = () => {
                     </div>
                 </motion.div>
             </motion.div>
-            <Footer />
         </div>
     );
 };

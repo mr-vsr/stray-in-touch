@@ -1,13 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { HeroImage } from '../../assets';
-import { Header, Footer } from '../../components/index.js';
 import { motion } from 'framer-motion';
 
 function LoginType() {
     return (
         <div className='updated-page-container'>
-            <Header />
             <motion.div
                 className='type-of-login-container'
                 initial={{ opacity: 0 }}
@@ -62,7 +60,6 @@ function LoginType() {
                     </motion.div>
                 </motion.div>
             </motion.div>
-            <Footer />
         </div>
     )
 }

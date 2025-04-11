@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Footer, DonationsCta, Loader } from '../../components/index.js';
+import { DonationsCta, Loader } from '../../components/index.js';
 import { db } from '../../auth/firebase-config.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -103,7 +103,6 @@ function UserHomePage() {
   if (loading) {
     return (
       <div className="user-homepage-container">
-        <Header />
         <div className="user-homepage-content">
           <Loader 
             type="default"
@@ -111,14 +110,12 @@ function UserHomePage() {
             text="Loading your dashboard..."
           />
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="user-homepage-container">
-      <Header />
       <div className="user-homepage-content">
         {error && <div className="error-message">{error}</div>}
 
@@ -203,7 +200,6 @@ function UserHomePage() {
         {/* Add DonationsCta component */}
         <DonationsCta />
       </div>
-      <Footer />
     </div>
   );
 }

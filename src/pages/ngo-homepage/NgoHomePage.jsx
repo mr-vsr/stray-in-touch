@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Footer } from '../../components/index.js';
 import { db } from '../../auth/firebase-config';
 import {
     collection,
@@ -9,8 +8,7 @@ import {
     query,
     where,
     addDoc,
-    Timestamp, // Import Timestamp
-    // serverTimestamp // Optionally import serverTimestamp
+    Timestamp,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
@@ -210,26 +208,21 @@ function NgoHomePage() {
         return 'Date not available';
     };
 
-    // --- JSX Rendering ---
-
     if (loading) {
         return (
             <div className='ngo-homepage-container'>
-                <Header />
                 <div className='ngo-homepage-content'>
                     <div className='loading-spinner'>
                         <div className='spinner'></div>
                         <p>Loading Reports...</p>
                     </div>
                 </div>
-                <Footer />
             </div>
         );
     }
 
     return (
         <div className='ngo-homepage-container'>
-            <Header />
             <div className='ngo-homepage-content'>
                 {error && <div className="error-message main-error">{error}</div>}
                 <section className='reports-section'>
@@ -383,7 +376,6 @@ function NgoHomePage() {
                     </div>
                 )}
             </div>
-            <Footer />
         </div>
     );
 }

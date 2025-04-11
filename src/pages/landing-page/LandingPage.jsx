@@ -1,10 +1,9 @@
 import React from 'react'
-import { Header, Footer, Hero, KnowAboutUs, WhatWedo, DonationsCta } from "../../components/index.js"
+import {Hero, KnowAboutUs, WhatWedo, DonationsCta } from "../../components/index.js"
 
 function LandingPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-            <Header />
             <main>
                 <section className="relative z-10" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}>
                     <Hero />
@@ -25,7 +24,6 @@ function LandingPage() {
                     <DonationsCta />
                 </section>
             </main>
-            <Footer />
         </div>
     )
 }
