@@ -309,7 +309,7 @@ function NgoSignup() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.85 }}
         >
-          Already have an account? <Link to="/ngo-login" style={styledLink}>Login</Link>
+          Already have an account? <Link to="/ngo-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
         </motion.p>
       </motion.div>
       {error && <ErrorDialog error={error} onClose={() => setError(null)} />}

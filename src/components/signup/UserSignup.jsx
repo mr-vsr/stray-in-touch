@@ -329,7 +329,7 @@ function Signup() {
             transition={{ delay: 0.9 }}
           >
             Already have an account?
-            <Link to="/user-login" style={styledLink}>Login</Link>
+            <Link to="/user-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
           </motion.p>
         </motion.div>
       </motion.div>

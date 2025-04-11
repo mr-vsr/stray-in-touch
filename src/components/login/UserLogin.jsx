@@ -85,7 +85,7 @@ function Login() {
                 transition={{ duration: 0.5 }}
             >
                 <motion.div
-                    className='login-container updated-section'
+                    className='login-container'
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
@@ -112,7 +112,7 @@ function Login() {
                         >
                             <input
                                 type='email'
-                                className='email updated-text'
+                                className='email'
                                 placeholder='E-mail'
                                 onChange={(event) => setEmail(event.target.value)}
                                 value={email}
@@ -126,7 +126,7 @@ function Login() {
                         >
                             <input
                                 type='password'
-                                className='password updated-text'
+                                className='password'
                                 placeholder='Password'
                                 onChange={(event) => setPassword(event.target.value)}
                                 value={password}
@@ -135,7 +135,8 @@ function Login() {
                         </motion.div>
                         <motion.button
                             type='submit'
-                            className='login-button updated-button'
+                            className='login-button updated-button {
+'
                             onClick={login}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -144,7 +145,7 @@ function Login() {
                         </motion.button>
                     </motion.form>
                     <motion.p
-                        className='signup-text updated-text'
+                        className='signup-text'
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.7 }}

@@ -74,7 +74,7 @@ function AdminLogin() {
                 transition={{ duration: 0.5 }}
             >
                 <motion.div
-                    className='login-container updated-section'
+                    className='login-container'
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
@@ -133,7 +133,7 @@ function AdminLogin() {
                         </motion.button>
                     </motion.form>
                     <motion.p
-                        className='signup-text updated-text'
+                        className='signup-text'
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.7 }}

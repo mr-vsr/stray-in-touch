@@ -295,7 +295,7 @@ function AdminSignup() {
                         transition={{ delay: 0.8 }}
                     >
                         Already have an account?
-                        <Link to="/admin-login" style={styledLink}>Login</Link>
+                        <Link to="/admin-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
                     </motion.p>
                 </motion.div>
             </motion.div>
