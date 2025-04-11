@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
 import { styledLink } from '../../assets';
@@ -16,12 +16,11 @@ function NgoSignup() {
 
   const [ngoInfo, setNgoInfo] = useState({
     name: "",
-    address: "",
     contact: "",
     email: "",
-    website: "",
-    password: "",
-    bannerUrl: ""
+    address: "",
+    banner: "",
+    password: ""
   });
 
   const [error, setError] = useState(null);
@@ -35,15 +34,19 @@ function NgoSignup() {
   const handleImageUpload = (imageUrl) => {
     setNgoInfo(prev => ({
       ...prev,
-      bannerUrl: imageUrl
+      banner: imageUrl
     }));
   };
 
   const handleRemoveImage = () => {
     setNgoInfo(prev => ({
       ...prev,
-      bannerUrl: ""
+      banner: ""
     }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
   };
 
   const validateEmail = (email) => {
@@ -51,54 +54,44 @@ function NgoSignup() {
     return emailRegex.test(email);
   };
 
-  const validateForm = () => {
-    // Check required fields
-    const requiredFields = ["name", "address", "contact", "email", "password"];
-    const missingFields = requiredFields.filter(field => !ngoInfo[field]);
-
-    if (missingFields.length > 0) {
-      setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
-      return false;
-    }
-
-    // Validate email
-    if (!validateEmail(ngoInfo.email)) {
-      setError({ code: 'auth/invalid-email-format', message: 'Please enter a valid email address' });
-      return false;
-    }
-
-    // Validate password length
-    if (ngoInfo.password.length < 6) {
-      setError({ code: 'auth/weak-password', message: 'Password should be at least 6 characters' });
-      return false;
-    }
-
-    return true;
-  };
-
   const signup = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!ngoInfo.name || !ngoInfo.contact || !ngoInfo.email || !ngoInfo.password || !ngoInfo.address) {
+      setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
+      return;
+    }
+
+    if (!validateEmail(ngoInfo.email)) {
+      setError({ code: 'auth/invalid-email-format', message: 'Please enter a valid email address' });
+      return;
+    }
+
+    if (ngoInfo.password.length < 6) {
+      setError({ code: 'auth/weak-password', message: 'Password should be at least 6 characters' });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, ngoInfo.email, ngoInfo.password);
       const user = userCredential.user;
+
+      // Update user profile with name and photo URL
+      await updateProfile(user, {
+        displayName: ngoInfo.name,
+        photoURL: ngoInfo.banner
+      });
 
       // Save NGO data to Firestore
       await addDoc(collection(db, "ngos"), {
         uid: user.uid,
         name: ngoInfo.name,
-        address: ngoInfo.address,
         contact: ngoInfo.contact,
         email: ngoInfo.email.toLowerCase(),
-        website: ngoInfo.website || null,
-        bannerUrl: ngoInfo.bannerUrl,
+        address: ngoInfo.address,
+        banner: ngoInfo.banner,
         createdAt: new Date()
       });
 
@@ -141,7 +134,7 @@ function NgoSignup() {
             NGO Signup
           </motion.h2>
           <motion.form
-            onSubmit={signup}
+            onSubmit={handleSubmit}
             className='signup-form-container'
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -162,23 +155,6 @@ function NgoSignup() {
                 required
               />
             </motion.div>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <input
-                type='text'
-                name="address"
-                className='address'
-                placeholder='Address *'
-                onChange={handleChange}
-                value={ngoInfo.address}
-                required
-              />
-            </motion.div>
-
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -198,7 +174,7 @@ function NgoSignup() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.65 }}
             >
               <input
                 type='email'
@@ -214,27 +190,28 @@ function NgoSignup() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.75 }}
+              transition={{ delay: 0.7 }}
             >
-              <input
-                type='url'
-                name="website"
-                className='email'
-                placeholder='Website URL (optional)'
+              <textarea
+                name="address"
+                className='address-textarea'
+                placeholder='NGO Address *'
                 onChange={handleChange}
-                value={ngoInfo.website}
+                value={ngoInfo.address}
+                required
+                rows="4"
               />
             </motion.div>
 
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.75 }}
             >
               <ImageUpload
-                label="NGO Banner Image (optional)"
+                label="Banner Image (optional)"
                 onImageUpload={handleImageUpload}
-                previewUrl={ngoInfo.bannerUrl}
+                previewUrl={ngoInfo.banner}
                 onRemoveImage={handleRemoveImage}
                 disabled={isSubmitting}
               />
@@ -243,7 +220,7 @@ function NgoSignup() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.85 }}
+              transition={{ delay: 0.8 }}
             >
               <input
                 type='password'
@@ -259,6 +236,7 @@ function NgoSignup() {
             <motion.button
               type='submit'
               className='signup-button updated-button'
+              onClick={signup}
               disabled={isSubmitting}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -270,7 +248,7 @@ function NgoSignup() {
             className='login-text'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
+            transition={{ delay: 0.85 }}
           >
             Already have an account?
             <Link to="/ngo-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>

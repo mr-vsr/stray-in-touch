@@ -3054,22 +3054,39 @@ body{
 }
 
 .address-textarea {
-  width: 100%;
-  padding: 12px 20px;
-  border: 2px solid #eee;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
-  font-family: 'Fredoka', sans-serif;
-  resize: vertical;
-  min-height: 100px;
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
 }
 
 .address-textarea:focus {
-  outline: none;
-  border-color: #0062ff;
-  box-shadow: 0 8px 32px 0 rgba(3, 11, 31, 0.2);
+    outline: none;
+    border-color: #0062ff;
+    box-shadow: 0 0 0 3px rgba(0, 98, 255, 0.1);
+    background-color: #ffffff;
+}
+
+.address-textarea::placeholder {
+    color: #6c757d;
+}
+
+.address-textarea:hover {
+    border-color: #0062ff;
+}
+
+@media (max-width: 768px) {
+    .address-textarea {
+        font-size: 0.9rem;
+        padding: 0.8rem;
+    }
 }
 
 /* Form validation styles */
