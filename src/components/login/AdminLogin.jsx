@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../auth/firebase-config";
+import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
 import { styledLink } from '../../assets';
 import { useDispatch } from 'react-redux';
@@ -8,6 +8,7 @@ import { Login as LogIn, Logout } from "../../store/authSlice";
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
 import { Header, Footer } from '../index';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 function AdminLogin() {
     const dispatch = useDispatch();
@@ -21,7 +22,7 @@ function AdminLogin() {
         e.preventDefault();
     }
 
-    const login = () => {
+    const login = async () => {
         if (!email || !password) {
             setError({ code: 'auth/missing-credentials' });
             return;
@@ -32,25 +33,45 @@ function AdminLogin() {
             return;
         }
 
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
-                if (user) {
-                    dispatch(LogIn({
-                        userData: user,
-                        isLoggedIn: true
-                    }));
-                    navigate('/admin-dashboard');
-                }
-            })
-            .catch((error) => {
-                setError(error);
-            });
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Check if user exists in admins collection
+            const adminsRef = collection(db, 'admins');
+            const q = query(adminsRef, where('uid', '==', user.uid));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                setError({ code: 'auth/wrong-login-type', message: 'This login is only for administrators.' });
+                await auth.signOut();
+                return;
+            }
+
+            dispatch(LogIn({
+                userData: user,
+                isLoggedIn: true
+            }));
+            navigate('/admin-dashboard');
+        } catch (error) {
+            setError(error);
+        }
     }
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
+                // Check if user exists in admins collection
+                const adminsRef = collection(db, 'admins');
+                const q = query(adminsRef, where('uid', '==', user.uid));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    await auth.signOut();
+                    dispatch(Logout());
+                    return;
+                }
+
                 dispatch(LogIn({
                     userData: user,
                     isLoggedIn: true

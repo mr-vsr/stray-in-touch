@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
@@ -8,12 +8,12 @@ import { useDispatch } from 'react-redux';
 import { Login } from "../../store/authSlice";
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Header, Footer } from '../index';
+import ImageUpload from '../common/ImageUpload';
 
 function NgoSignup() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
   const [ngoInfo, setNgoInfo] = useState({
     name: "",
@@ -21,11 +21,10 @@ function NgoSignup() {
     contact: "",
     email: "",
     website: "",
-    password: ""
+    password: "",
+    bannerUrl: ""
   });
 
-  const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState(null);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,21 +33,18 @@ function NgoSignup() {
     setNgoInfo({ ...ngoInfo, [name]: value });
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBannerFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setBannerPreview(previewUrl);
-    }
+  const handleImageUpload = (imageUrl) => {
+    setNgoInfo(prev => ({
+      ...prev,
+      bannerUrl: imageUrl
+    }));
   };
 
-  const removeImage = () => {
-    setBannerFile(null);
-    setBannerPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleRemoveImage = () => {
+    setNgoInfo(prev => ({
+      ...prev,
+      bannerUrl: ""
+    }));
   };
 
   const validateEmail = (email) => {
@@ -81,17 +77,6 @@ function NgoSignup() {
     return true;
   };
 
-  const uploadBanner = async () => {
-    if (!bannerFile) return null;
-
-    const storage = getStorage();
-    const fileRef = ref(storage, `ngo-banners/${ngoInfo.name}-${Date.now()}`);
-
-    await uploadBytes(fileRef, bannerFile);
-    const downloadURL = await getDownloadURL(fileRef);
-    return downloadURL;
-  };
-
   const signup = async (e) => {
     e.preventDefault();
 
@@ -102,22 +87,19 @@ function NgoSignup() {
     setIsSubmitting(true);
 
     try {
-      // Upload banner image if provided
-      const bannerUrl = await uploadBanner();
-
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, ngoInfo.email, ngoInfo.password);
       const user = userCredential.user;
 
       // Save NGO data to Firestore
-      await addDoc(collection(db, "NgoInfo"), {
+      await addDoc(collection(db, "ngos"), {
         uid: user.uid,
         name: ngoInfo.name,
         address: ngoInfo.address,
         contact: ngoInfo.contact,
         email: ngoInfo.email.toLowerCase(),
         website: ngoInfo.website || null,
-        bannerUrl: bannerUrl,
+        bannerUrl: ngoInfo.bannerUrl,
         createdAt: new Date()
       });
 
@@ -138,182 +120,168 @@ function NgoSignup() {
   };
 
   return (
-    <motion.div
-      className='container'
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="updated-page-container">
+      <Header />
       <motion.div
-        className='signup-container'
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
+        className='container'
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        <motion.h2
-          className='signup-heading'
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.3 }}
+        <motion.div
+          className='signup-container'
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
         >
-          NGO Registration
-        </motion.h2>
-        <motion.form
-          onSubmit={signup}
-          className='signup-form-container'
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
+          <motion.h2
+            className='signup-heading updated-heading'
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3 }}
           >
-            <input
-              type='text'
-              name="name"
-              className='username'
-              placeholder='NGO Name *'
-              onChange={handleChange}
-              value={ngoInfo.name}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.55 }}
+            NGO Signup
+          </motion.h2>
+          <motion.form
+            onSubmit={signup}
+            className='signup-form-container'
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
           >
-            <textarea
-              name="address"
-              className='address-textarea'
-              placeholder='NGO Address *'
-              onChange={handleChange}
-              value={ngoInfo.address}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            <input
-              type='tel'
-              name="contact"
-              className='contact'
-              placeholder='Contact Number *'
-              onChange={handleChange}
-              value={ngoInfo.contact}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.65 }}
-          >
-            <input
-              type='email'
-              name="email"
-              className='email'
-              placeholder='Email Address *'
-              onChange={handleChange}
-              value={ngoInfo.email}
-              required
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            <input
-              type='url'
-              name="website"
-              className='email'
-              placeholder='Website URL (optional)'
-              onChange={handleChange}
-              value={ngoInfo.website}
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.75 }}
-            className="image-upload-container"
-          >
-            <label className="image-upload-label">NGO Banner Image (optional)</label>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              className="image-upload-input"
-              onChange={handleFileChange}
-            />
-            <div
-              className="image-upload-button"
-              onClick={() => fileInputRef.current?.click()}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
             >
-              {bannerPreview ? 'Change Image' : 'Click to upload banner image'}
-            </div>
-            {bannerPreview && (
-              <div className="image-preview-container">
-                <img src={bannerPreview} alt="Banner Preview" />
-                <button
-                  type="button"
-                  className="remove-image-button"
-                  onClick={removeImage}
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </motion.div>
+              <input
+                type='text'
+                name="name"
+                className='name'
+                placeholder='NGO Name *'
+                onChange={handleChange}
+                value={ngoInfo.name}
+                required
+              />
+            </motion.div>
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            <input
-              type='password'
-              name="password"
-              className='password'
-              placeholder='Password *'
-              onChange={handleChange}
-              value={ngoInfo.password}
-              required
-            />
-          </motion.div>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <input
+                type='text'
+                name="address"
+                className='address'
+                placeholder='Address *'
+                onChange={handleChange}
+                value={ngoInfo.address}
+                required
+              />
+            </motion.div>
 
-          <motion.button
-            type='submit'
-            className='signup-button updated-button'
-            disabled={isSubmitting}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.65 }}
+            >
+              <input
+                type='tel'
+                name="contact"
+                className='contact'
+                placeholder='Contact Number *'
+                onChange={handleChange}
+                value={ngoInfo.contact}
+                required
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+            >
+              <input
+                type='email'
+                name="email"
+                className='email'
+                placeholder='Email Address *'
+                onChange={handleChange}
+                value={ngoInfo.email}
+                required
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.75 }}
+            >
+              <input
+                type='url'
+                name="website"
+                className='email'
+                placeholder='Website URL (optional)'
+                onChange={handleChange}
+                value={ngoInfo.website}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <ImageUpload
+                label="NGO Banner Image (optional)"
+                onImageUpload={handleImageUpload}
+                previewUrl={ngoInfo.bannerUrl}
+                onRemoveImage={handleRemoveImage}
+                disabled={isSubmitting}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.85 }}
+            >
+              <input
+                type='password'
+                name="password"
+                className='password'
+                placeholder='Password *'
+                onChange={handleChange}
+                value={ngoInfo.password}
+                required
+              />
+            </motion.div>
+
+            <motion.button
+              type='submit'
+              className='signup-button updated-button'
+              disabled={isSubmitting}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isSubmitting ? 'Registering...' : 'Register NGO'}
+            </motion.button>
+          </motion.form>
+          <motion.p
+            className='login-text'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
           >
-            {isSubmitting ? 'Registering...' : 'Register NGO'}
-          </motion.button>
-        </motion.form>
-        <motion.p
-          className='login-text'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.85 }}
-        >
-          Already have an account? <Link to="/ngo-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
-        </motion.p>
+            Already have an account?
+            <Link to="/ngo-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
+          </motion.p>
+        </motion.div>
+        {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
       </motion.div>
-      {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
-    </motion.div>
+      <Footer />
+    </div>
   );
 }
 

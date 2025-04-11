@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { Login as LogIn } from "../../store/authSlice";
 import { collection, addDoc } from "firebase/firestore";
 import { Header, Footer } from '../../components/index.js';
+import ImageUpload from '../common/ImageUpload';
 
 function Signup() {
   const navigate = useNavigate();
@@ -26,8 +27,7 @@ function Signup() {
   });
 
   const [error, setError] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const fileInputRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,92 +46,80 @@ function Signup() {
     return emailRegex.test(email);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setAvatarPreview(previewUrl);
-    }
+  const handleImageUpload = (imageUrl) => {
+    setUserInfo(prev => ({
+      ...prev,
+      avatar: imageUrl
+    }));
   };
 
-  const removeImage = () => {
-    setAvatarPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleRemoveImage = () => {
+    setUserInfo(prev => ({
+      ...prev,
+      avatar: ""
+    }));
   };
 
-  const signup = async () => {
-    // Validate required fields
-    const requiredFields = ["name", "contact", "email", "gender", "password"];
-    const missingFields = requiredFields.filter(field => !userInfo[field]);
+  const signup = async (e) => {
+    e.preventDefault();
 
-    if (missingFields.length > 0) {
+    if (!userInfo.name || !userInfo.contact || !userInfo.email || !userInfo.password) {
       setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
       return;
     }
 
-    // Validate email format
     if (!validateEmail(userInfo.email)) {
       setError({ code: 'auth/invalid-email-format', message: 'Please enter a valid email address' });
       return;
     }
 
-    // Validate password length
     if (userInfo.password.length < 6) {
       setError({ code: 'auth/weak-password', message: 'Password should be at least 6 characters' });
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password);
       const user = userCredential.user;
 
-      if (user) {
-        // Save additional user info to Firestore
-        await addDoc(collection(db, "users"), {
-          uid: user.uid,
-          role: userInfo.role,
-          name: userInfo.name,
-          contact: userInfo.contact,
-          email: userInfo.email.toLowerCase(),
-          avatar: userInfo.avatar,
-          gender: userInfo.gender,
-          createdAt: new Date()
-        });
+      // Update user profile with name and photo URL
+      await updateProfile(user, {
+        displayName: userInfo.name,
+        photoURL: userInfo.avatar
+      });
 
-        // Update profile in Firebase Auth
-        if (userInfo.name) {
-          await updateProfile(user, {
-            displayName: userInfo.name,
-            photoURL: userInfo.avatar || null
-          });
-        }
+      // Save user data to Firestore
+      await addDoc(collection(db, "users"), {
+        uid: user.uid,
+        role: userInfo.role,
+        name: userInfo.name,
+        contact: userInfo.contact,
+        email: userInfo.email.toLowerCase(),
+        avatar: userInfo.avatar,
+        gender: userInfo.gender,
+        createdAt: new Date()
+      });
 
-        // Login the user
-        dispatch(LogIn({
-          userData: user,
-          isLoggedIn: true
-        }));
+      // Login the user
+      dispatch(LogIn({
+        userData: user,
+        isLoggedIn: true
+      }));
 
-        // Navigate based on role and previous location
-        const fromDonations = location.state?.from === 'donations';
-        if (userInfo.role === "admin") {
-          navigate('/admin-dashboard');
-        } else if (fromDonations) {
-          navigate('/donations');
-        } else {
-          navigate('/user-homepage');
-        }
-      }
+      // Navigate to user homepage
+      navigate("/user-homepage");
     } catch (error) {
+      console.error("Error during signup:", error);
       setError(error);
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className='updated-page-container'>
+    <div className="updated-page-container">
       <Header />
       <motion.div
         className='container'
@@ -146,7 +134,7 @@ function Signup() {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <motion.h2
-            className='signup-heading'
+            className='signup-heading updated-heading'
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.3 }}
@@ -164,37 +152,6 @@ function Signup() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="form-role-selection"
-            >
-              <label className="role-label">Register as:</label>
-              <div className="role-options">
-                <label className={`role-option ${userInfo.role === 'user' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="user"
-                    checked={userInfo.role === 'user'}
-                    onChange={handleChange}
-                  />
-                  <span>User</span>
-                </label>
-                <label className={`role-option ${userInfo.role === 'admin' ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="admin"
-                    checked={userInfo.role === 'admin'}
-                    onChange={handleChange}
-                  />
-                  <span>Admin</span>
-                </label>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.55 }}
             >
               <input
                 type='text'
@@ -242,35 +199,15 @@ function Signup() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.75 }}
-              className="image-upload-container"
+              transition={{ delay: 0.7 }}
             >
-              <label className="image-upload-label">Profile Picture (optional)</label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                className="image-upload-input"
-                onChange={handleFileChange}
+              <ImageUpload
+                label="Profile Picture (optional)"
+                onImageUpload={handleImageUpload}
+                previewUrl={userInfo.avatar}
+                onRemoveImage={handleRemoveImage}
+                disabled={isSubmitting}
               />
-              <div
-                className="image-upload-button"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {avatarPreview ? 'Change Image' : 'Click to upload profile picture'}
-              </div>
-              {avatarPreview && (
-                <div className="image-preview-container">
-                  <img src={avatarPreview} alt="Avatar Preview" />
-                  <button
-                    type="button"
-                    className="remove-image-button"
-                    onClick={removeImage}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
             </motion.div>
 
             <motion.div
@@ -313,27 +250,28 @@ function Signup() {
               type='submit'
               className='signup-button updated-button'
               onClick={signup}
+              disabled={isSubmitting}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Sign Up
+              {isSubmitting ? 'Registering...' : 'Register'}
             </motion.button>
           </motion.form>
           <motion.p
             className='login-text'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
+            transition={{ delay: 0.85 }}
           >
             Already have an account?
             <Link to="/user-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
           </motion.p>
         </motion.div>
+        {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
       </motion.div>
       <Footer />
-      {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
     </div>
-  )
+  );
 }
 
-export default Signup
+export default Signup;

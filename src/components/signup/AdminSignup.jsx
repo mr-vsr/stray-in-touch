@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,12 +9,11 @@ import ErrorDialog from '../ErrorDialog';
 import { useDispatch } from 'react-redux';
 import { Login } from "../../store/authSlice";
 import { Header, Footer } from '../../components/index.js';
-import '../../App.css';
+import ImageUpload from '../common/ImageUpload';
 
 function AdminSignup() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -27,7 +26,6 @@ function AdminSignup() {
 
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [avatarPreview, setAvatarPreview] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -37,26 +35,18 @@ function AdminSignup() {
         }));
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setFormData(prev => ({
-                ...prev,
-                avatar: URL.createObjectURL(file)
-            }));
-            setAvatarPreview(URL.createObjectURL(file));
-        }
+    const handleImageUpload = (imageUrl) => {
+        setFormData(prev => ({
+            ...prev,
+            avatar: imageUrl
+        }));
     };
 
-    const removeImage = () => {
+    const handleRemoveImage = () => {
         setFormData(prev => ({
             ...prev,
             avatar: ""
         }));
-        setAvatarPreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
     };
 
     const handleSubmit = (e) => {
@@ -68,23 +58,19 @@ function AdminSignup() {
         return emailRegex.test(email);
     };
 
-    const signup = async () => {
-        // Validate required fields
-        const requiredFields = ["name", "contact", "email", "gender", "password"];
-        const missingFields = requiredFields.filter(field => !formData[field]);
+    const signup = async (e) => {
+        e.preventDefault();
 
-        if (missingFields.length > 0) {
+        if (!formData.name || !formData.contact || !formData.email || !formData.password) {
             setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
             return;
         }
 
-        // Validate email format
         if (!validateEmail(formData.email)) {
             setError({ code: 'auth/invalid-email-format', message: 'Please enter a valid email address' });
             return;
         }
 
-        // Validate password length
         if (formData.password.length < 6) {
             setError({ code: 'auth/weak-password', message: 'Password should be at least 6 characters' });
             return;
@@ -93,40 +79,36 @@ function AdminSignup() {
         setIsSubmitting(true);
 
         try {
-            // Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const user = userCredential.user;
 
-            if (user) {
-                // Save additional admin info to Firestore
-                await addDoc(collection(db, "admins"), {
-                    uid: user.uid,
-                    role: "admin",
-                    name: formData.name,
-                    contact: formData.contact,
-                    email: formData.email.toLowerCase(),
-                    avatar: formData.avatar || null,
-                    gender: formData.gender,
-                    createdAt: new Date()
-                });
+            // Update user profile with name and photo URL
+            await updateProfile(user, {
+                displayName: formData.name,
+                photoURL: formData.avatar
+            });
 
-                // Update profile in Firebase Auth
-                await updateProfile(user, {
-                    displayName: formData.name,
-                    photoURL: formData.avatar || null
-                });
+            // Save admin data to Firestore
+            await addDoc(collection(db, "admins"), {
+                uid: user.uid,
+                name: formData.name,
+                contact: formData.contact,
+                email: formData.email.toLowerCase(),
+                avatar: formData.avatar,
+                gender: formData.gender,
+                createdAt: new Date()
+            });
 
-                // Login the admin
-                dispatch(Login({
-                    userData: user,
-                    isLoggedIn: true
-                }));
+            // Login the user
+            dispatch(Login({
+                userData: user,
+                isLoggedIn: true
+            }));
 
-                // Navigate to admin dashboard
-                navigate("/admin-dashboard");
-            }
+            // Navigate to admin dashboard
+            navigate("/admin-dashboard");
         } catch (error) {
-            console.error("Error in admin signup:", error);
+            console.error("Error during signup:", error);
             setError(error);
         } finally {
             setIsSubmitting(false);
@@ -134,7 +116,7 @@ function AdminSignup() {
     };
 
     return (
-        <div className='updated-page-container'>
+        <div className="updated-page-container">
             <Header />
             <motion.div
                 className='container'
@@ -149,12 +131,12 @@ function AdminSignup() {
                     transition={{ delay: 0.2, duration: 0.5 }}
                 >
                     <motion.h2
-                        className='signup-heading'
+                        className='signup-heading updated-heading'
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        Admin Registration
+                        Admin Signup
                     </motion.h2>
                     <motion.form
                         onSubmit={handleSubmit}
@@ -182,7 +164,7 @@ function AdminSignup() {
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.55 }}
+                            transition={{ delay: 0.6 }}
                         >
                             <input
                                 type='tel'
@@ -198,7 +180,7 @@ function AdminSignup() {
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.6 }}
+                            transition={{ delay: 0.65 }}
                         >
                             <input
                                 type='email'
@@ -214,41 +196,21 @@ function AdminSignup() {
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.75 }}
-                            className="image-upload-container"
+                            transition={{ delay: 0.7 }}
                         >
-                            <label className="image-upload-label">Profile Picture (optional)</label>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                accept="image/*"
-                                className="image-upload-input"
-                                onChange={handleFileChange}
+                            <ImageUpload
+                                label="Profile Picture (optional)"
+                                onImageUpload={handleImageUpload}
+                                previewUrl={formData.avatar}
+                                onRemoveImage={handleRemoveImage}
+                                disabled={isSubmitting}
                             />
-                            <div
-                                className="image-upload-button"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                {avatarPreview ? 'Change Image' : 'Click to upload profile picture'}
-                            </div>
-                            {avatarPreview && (
-                                <div className="image-preview-container">
-                                    <img src={avatarPreview} alt="Avatar Preview" />
-                                    <button
-                                        type="button"
-                                        className="remove-image-button"
-                                        onClick={removeImage}
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            )}
                         </motion.div>
 
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.7 }}
+                            transition={{ delay: 0.75 }}
                             className="form-gender-selection"
                         >
                             <label className="gender-label">Gender *</label>
@@ -268,7 +230,7 @@ function AdminSignup() {
                         <motion.div
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.75 }}
+                            transition={{ delay: 0.8 }}
                         >
                             <input
                                 type='password'
@@ -282,29 +244,29 @@ function AdminSignup() {
                         </motion.div>
 
                         <motion.button
-                            type='button'
+                            type='submit'
                             className='signup-button updated-button'
                             onClick={signup}
                             disabled={isSubmitting}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            {isSubmitting ? 'Creating Account...' : 'Create Admin Account'}
+                            {isSubmitting ? 'Registering...' : 'Register Admin'}
                         </motion.button>
                     </motion.form>
                     <motion.p
                         className='login-text'
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
+                        transition={{ delay: 0.85 }}
                     >
                         Already have an account?
                         <Link to="/admin-login" style={{ ...styledLink, color: '#0062ff' }}>Login</Link>
                     </motion.p>
                 </motion.div>
+                {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
             </motion.div>
             <Footer />
-            {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </div>
     );
 }
