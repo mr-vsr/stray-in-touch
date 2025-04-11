@@ -8,7 +8,6 @@ import { useDispatch } from 'react-redux';
 import { Login } from "../../store/authSlice";
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
-import { Header, Footer } from '../index';
 import ImageUpload from '../common/ImageUpload';
 
 function NgoSignup() {
@@ -121,7 +120,6 @@ function NgoSignup() {
 
   return (
     <div className="updated-page-container">
-      <Header />
       <motion.div
         className='container'
         initial={{ opacity: 0 }}
@@ -280,7 +278,6 @@ function NgoSignup() {
         </motion.div>
         {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
       </motion.div>
-      <Footer />
     </div>
   );
 }

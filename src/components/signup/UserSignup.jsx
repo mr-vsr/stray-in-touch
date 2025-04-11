@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate} from 'react-router-dom';
 import { styledLink } from '../../assets';
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
 import { useDispatch } from 'react-redux';
 import { Login as LogIn } from "../../store/authSlice";
 import { collection, addDoc } from "firebase/firestore";
-import { Header, Footer } from '../../components/index.js';
 import ImageUpload from '../common/ImageUpload';
 
 function Signup() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const location = useLocation();
 
   const [userInfo, setUserInfo] = useState({
     role: "user",
@@ -120,7 +118,6 @@ function Signup() {
 
   return (
     <div className="updated-page-container">
-      <Header />
       <motion.div
         className='container'
         initial={{ opacity: 0 }}
@@ -269,7 +266,6 @@ function Signup() {
         </motion.div>
         {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
       </motion.div>
-      <Footer />
     </div>
   );
 }
