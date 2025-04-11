@@ -1593,18 +1593,280 @@ body{
 
 /* NGO Homepage Styles */
 .ngo-homepage-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(135deg, #F2C94C 0%, #F2994A 100%);
+    min-height: 100vh;
+    background: linear-gradient(135deg, #030b1f 0%, #1a1b26 100%);
+    color: white;
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
 }
 
 .ngo-homepage-content {
-  flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Reports Section */
+.reports-section {
+    background: rgba(3, 11, 31, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px 0 rgba(3, 11, 31, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 3rem;
+}
+
+.reports-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #0062ff, #da61ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.report-card {
+    background: rgba(3, 11, 31, 0.95);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(3, 11, 31, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: slideUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(0, 98, 255, 0.15);
+}
+
+.report-card:nth-child(1) { animation-delay: 0.1s; }
+.report-card:nth-child(2) { animation-delay: 0.2s; }
+.report-card:nth-child(3) { animation-delay: 0.3s; }
+.report-card:nth-child(4) { animation-delay: 0.4s; }
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.report-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+}
+
+.report-date {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.report-description {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.report-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.report-location {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.report-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.report-status.pending {
+    background: rgba(255, 170, 0, 0.2);
+    color: #ffaa00;
+}
+
+.report-status.responded {
+    background: rgba(0, 200, 83, 0.2);
+    color: #00c853;
+}
+
+.report-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.respond-button {
+    background: linear-gradient(135deg, #0062ff, #da61ff);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.respond-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 98, 255, 0.3);
+}
+
+/* Response Dialog */
+.response-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.response-dialog-content {
+    background: rgba(3, 11, 31, 0.95);
+    padding: 2rem;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 32px 0 rgba(3, 11, 31, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    animation: scaleIn 0.3s ease forwards;
+}
+
+.response-dialog h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.response-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.response-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.response-input:focus {
+    outline: none;
+    border-color: #0062ff;
+    box-shadow: 0 0 0 3px rgba(0, 98, 255, 0.2);
+}
+
+.response-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.response-submit {
+    background: linear-gradient(135deg, #0062ff, #da61ff);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 25px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.response-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 98, 255, 0.3);
+}
+
+/* Animations */
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ngo-homepage-content {
+        padding: 1rem;
+    }
+
+    .reports-section {
+        padding: 1.5rem;
+    }
+
+    .reports-section h2 {
+        font-size: 2rem;
+    }
+
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .response-dialog-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .ngo-homepage-container {
+        padding: 1rem;
+    }
+
+    .report-actions {
+        flex-direction: column;
+    }
+
+    .respond-button {
+        width: 100%;
+    }
 }
 
 /* Updated Card Styles */
