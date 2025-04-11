@@ -208,6 +208,70 @@ function NgoHomePage() {
         return 'Date not available';
     };
 
+    const ReportCard = ({ report, onHelpClick }) => {
+        return (
+            <div className="report-card dark-theme">
+                <div className="report-image-container">
+                    <img 
+                        src={report.imageUrl || 'https://via.placeholder.com/400x200'} 
+                        alt={report.description} 
+                        className="report-image"
+                    />
+                    <span className={`report-status ${report.status}`}>
+                        {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                    </span>
+                </div>
+                
+                <div className="report-content">
+                    <p className="report-description">{report.description}</p>
+                    
+                    <div className="reporter-info">
+                        <span className="reporter-name">
+                            {report.user?.name || 'Anonymous Reporter'}
+                        </span>
+                        <span className="reporter-contact">
+                            <i className="fas fa-phone"></i>
+                            {report.user?.contact || 'Contact not provided'}
+                        </span>
+                    </div>
+                    
+                    <div className="report-meta">
+                        <span className="report-date">
+                            <i className="far fa-clock"></i>
+                            {formatDate(report.timestamp)}
+                        </span>
+                    </div>
+                    
+                    {report.latitude && report.longitude && (
+                        <div className="map-link-container">
+                            <a 
+                                href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="map-link"
+                            >
+                                <i className="fas fa-map-marker-alt"></i>
+                                View on Map
+                            </a>
+                        </div>
+                    )}
+                    
+                    {report.status === 'pending' && (
+                        <div className="report-actions">
+                            <button 
+                                className="help-button"
+                                onClick={() => onHelpClick(report)}
+                            >
+                                <i className="fas fa-hands-helping"></i>
+                                Provide Help
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className='ngo-homepage-container'>
@@ -246,77 +310,7 @@ function NgoHomePage() {
                     ) : (
                         <div className='reports-grid'>
                             {filteredReports.map(report => (
-                                <div key={report.id} className='report-card dark-theme'> {/* Ensure styles exist */}
-                                    <div className='report-header'>
-                                        {/* Use locationDescription or description as title */}
-                                        <h3 className='report-title'>{report.locationDescription || 'Report'}</h3>
-                                        <span className={`report-status ${report.status}`}>
-                                            {report.status}
-                                        </span>
-                                    </div>
-                                    {report.imageUrl && (
-                                        <div className='report-image-container'>
-                                            <img
-                                                src={report.imageUrl}
-                                                alt="Stray animal report"
-                                                className='report-image'
-                                            />
-                                        </div>
-                                    )}
-                                    <div className='report-content'>
-                                        <p className='report-description'>{report.description}</p>
-                                        <div className='report-meta'>
-                                            <span className='report-location'>
-                                                <i className="fas fa-map-marker-alt"></i> {report.locationDescription}
-                                            </span>
-                                            {/* Display formatted date */}
-                                            <span className='report-date'>
-                                                <i className="fas fa-calendar"></i> {formatDate(report.timestamp)}
-                                            </span>
-                                            {/* Display contact info if available */}
-                                            {report.contact && (
-                                                <span className='report-contact'>
-                                                    <i className="fas fa-phone"></i> {report.contact}
-                                                </span>
-                                            )}
-                                        </div>
-                                         {/* Optional: Display Map Link */}
-                                        {report.latitude && report.longitude && (
-                                            <div className='map-link-container'>
-                                                <a
-                                                    href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className='map-link'
-                                                >
-                                                     <i className="fas fa-external-link-alt"></i> View Map
-                                                </a>
-                                            </div>
-                                        )}
-                                        {/* Action Button */}
-                                        {report.status === 'pending' && (
-                                            <div className='report-actions'>
-                                                <button
-                                                    className='help-button'
-                                                    onClick={() => handleHelpClick(report)}
-                                                    disabled={isSubmittingHelp} // Disable if any submission is in progress
-                                                >
-                                                    <i className="fas fa-hands-helping"></i> Provide Help
-                                                </button>
-                                            </div>
-                                        )}
-                                        {/* NGO Response Details */}
-                                        {report.status === 'complete' && report.ngo && (
-                                            <div className='ngo-response'>
-                                                <h4>NGO Response:</h4>
-                                                <p><strong>NGO:</strong> {report.ngo.name}</p>
-                                                <p><strong>Address:</strong> {report.ngo.address}</p>
-                                                {/* *** Display the correct help description *** */}
-                                                <p><strong>Action Taken:</strong> {report.ngo.helpDescription || 'Details not provided'}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                <ReportCard key={report.id} report={report} onHelpClick={handleHelpClick} />
                             ))}
                         </div>
                     )}

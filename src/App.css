@@ -2192,66 +2192,87 @@ body{
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .report-card.dark-theme:hover {
     border-color: rgba(0, 98, 255, 0.3);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transform: translateY(-5px);
 }
 
-.report-card.dark-theme .report-header {
-    background: rgba(0, 98, 255, 0.05);
-    border-bottom: 1px solid rgba(0, 98, 255, 0.1);
-    padding: 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.report-card.dark-theme .report-title {
-    color: #ffffff;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin: 0;
-    text-shadow: 0 0 20px rgba(0, 98, 255, 0.3);
-}
-
+/* Report Image */
 .report-card.dark-theme .report-image-container {
+    width: 100%;
     height: 200px;
     overflow: hidden;
     position: relative;
-    border-bottom: 1px solid rgba(0, 98, 255, 0.1);
+    border-radius: 12px 12px 0 0;
 }
 
 .report-card.dark-theme .report-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
 }
 
+.report-card.dark-theme:hover .report-image {
+    transform: scale(1.05);
+}
+
+/* Report Content */
 .report-card.dark-theme .report-content {
-    padding: 1.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
+/* Description */
 .report-card.dark-theme .report-description {
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.6;
-    margin-bottom: 1.5rem;
     font-size: 0.95rem;
+    margin: 0;
 }
 
+/* Reporter Info */
+.report-card.dark-theme .reporter-info {
+    background: rgba(0, 98, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.report-card.dark-theme .reporter-name {
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.report-card.dark-theme .reporter-contact {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Report Meta */
 .report-card.dark-theme .report-meta {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(0, 98, 255, 0.1);
 }
 
-.report-card.dark-theme .report-location,
-.report-card.dark-theme .report-date,
-.report-card.dark-theme .report-contact {
+.report-card.dark-theme .report-date {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -2259,40 +2280,43 @@ body{
     font-size: 0.9rem;
 }
 
-.report-card.dark-theme .report-location i,
-.report-card.dark-theme .report-date i,
-.report-card.dark-theme .report-contact i {
+.report-card.dark-theme .report-date i {
     color: #0062ff;
 }
 
-.report-card.dark-theme .report-status {
+/* Map Link */
+.report-card.dark-theme .map-link-container {
+    margin-top: 0.5rem;
+}
+
+.report-card.dark-theme .map-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #0062ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    background: rgba(0, 98, 255, 0.1);
+    border-radius: 8px;
 }
 
-.report-card.dark-theme .report-status.pending {
-    background: rgba(255, 193, 7, 0.2);
-    color: #ffc107;
-}
-
-.report-card.dark-theme .report-status.complete {
+.report-card.dark-theme .map-link:hover {
     background: rgba(0, 98, 255, 0.2);
-    color: #0062ff;
+    color: #60a5fa;
 }
 
+/* Action Buttons */
 .report-card.dark-theme .report-actions {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
     border-top: 1px solid rgba(0, 98, 255, 0.1);
 }
 
 .report-card.dark-theme .help-button {
     width: 100%;
-    padding: 1rem;
+    padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 8px;
     background: linear-gradient(135deg, #0062ff, #60a5fa);
@@ -2305,64 +2329,52 @@ body{
     justify-content: center;
     gap: 0.5rem;
     font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(0, 98, 255, 0.2);
 }
 
 .report-card.dark-theme .help-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 98, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 98, 255, 0.3);
 }
 
-.report-card.dark-theme .help-button:disabled {
-    background: rgba(0, 98, 255, 0.1);
-    cursor: not-allowed;
-    transform: none;
-}
-
-.report-card.dark-theme .ngo-response {
-    background: rgba(0, 98, 255, 0.05);
-    border: 1px solid rgba(0, 98, 255, 0.1);
+/* Status Badge */
+.report-card.dark-theme .report-status {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 2px 6px;
     border-radius: 8px;
-    padding: 1.25rem;
-    margin-top: 1.5rem;
-}
-
-.report-card.dark-theme .ngo-response h4 {
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     color: #ffffff;
-    margin: 0 0 1rem 0;
-    font-size: 1.1rem;
-    text-shadow: 0 0 20px rgba(0, 98, 255, 0.3);
+    letter-spacing: 0.5px;
 }
 
-.report-card.dark-theme .ngo-response p {
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0.5rem 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
+.report-card.dark-theme .report-status.pending {
+    background: rgba(255, 152, 0, 0.9);
 }
 
-.report-card.dark-theme .ngo-response strong {
-    color: #0062ff;
-    font-weight: 600;
+.report-card.dark-theme .report-status.complete {
+    background: rgba(76, 175, 80, 0.9);
 }
 
-.map-link-container {
-    margin-top: 1rem;
-}
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .report-card.dark-theme .report-image-container {
+        height: 180px;
+    }
 
-.map-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #0062ff;
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-}
+    .report-card.dark-theme .report-content {
+        padding: 0.75rem;
+    }
 
-.map-link:hover {
-    color: #60a5fa;
-    text-decoration: underline;
+    .report-card.dark-theme .report-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
 }
 
 .no-reports {
