@@ -54,6 +54,8 @@ body{
   color: #60a5fa;
   margin: 0 auto;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
 }
 .login-container:hover, .signup-container:hover {
   transform: translateY(-5px);
@@ -110,7 +112,22 @@ body{
   background: rgba(255, 255, 255, 0.95);
 }
 
-.login-button::after, .signup-button::after{
+/* Button styles with ripple effect */
+.login-button, .signup-button {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0062ff, #da61ff);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-button::after, .signup-button::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -121,7 +138,9 @@ body{
   border-radius: 50%;
   transform: translate(-50%, -50%);
   animation: ripple 1s ease-out infinite;
+  pointer-events: none;
 }
+
 @keyframes ripple {
   0% {
     width: 5px;
@@ -134,6 +153,16 @@ body{
     opacity: 0;
   }
 }
+
+.login-button:hover, .signup-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 98, 255, 0.3);
+}
+
+.login-button:active, .signup-button:active {
+  transform: translateY(0);
+}
+
 .signup-text, .login-text{
   color: #666;
   text-align: center;
