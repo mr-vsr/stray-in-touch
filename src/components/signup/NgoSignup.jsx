@@ -85,7 +85,7 @@ function NgoSignup() {
       });
 
       // Save NGO data to Firestore
-      await addDoc(collection(db, "ngos"), {
+      await addDoc(collection(db, "NgoInfo"), {
         uid: user.uid,
         name: ngoInfo.name,
         contact: ngoInfo.contact,
