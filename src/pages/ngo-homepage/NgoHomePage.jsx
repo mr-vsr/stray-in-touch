@@ -12,6 +12,19 @@ import {
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
+// Add distance calculation utility function
+const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in KM
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in KM
+};
+
 function NgoHomePage() {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,7 +37,8 @@ function NgoHomePage() {
         description: ''
     });
     const [isSubmittingHelp, setIsSubmittingHelp] = useState(false); // Loading state for help submission
-
+    const [ngoLocation, setNgoLocation] = useState(null);
+    const [loadingLocation, setLoadingLocation] = useState(true);
 
     // Fetch Current NGO Details
     useEffect(() => {
@@ -56,6 +70,43 @@ function NgoHomePage() {
         fetchCurrentNgo();
     }, []);
 
+    // Add function to fetch NGO location
+    useEffect(() => {
+        const fetchNgoLocation = async () => {
+            try {
+                const auth = getAuth();
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    const q = query(collection(db, 'NgoInfo'), where('email', '==', currentUser.email));
+                    const ngoDocSnapshot = await getDocs(q);
+                    if (!ngoDocSnapshot.empty) {
+                        const ngoDoc = ngoDocSnapshot.docs[0];
+                        const ngoData = ngoDoc.data();
+                        
+                        // Use Google Maps Geocoding API to get coordinates
+                        const response = await fetch(
+                            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(ngoData.address)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+                        );
+                        const data = await response.json();
+                        
+                        if (data.results && data.results[0]) {
+                            const location = data.results[0].geometry.location;
+                            setNgoLocation({
+                                lat: location.lat,
+                                lng: location.lng
+                            });
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching NGO location:", error);
+            } finally {
+                setLoadingLocation(false);
+            }
+        };
+
+        fetchNgoLocation();
+    }, []);
 
     // Fetch Reports (Optimized)
     useEffect(() => {
@@ -208,7 +259,20 @@ function NgoHomePage() {
         return 'Date not available';
     };
 
+    // Update ReportCard component to include distance
     const ReportCard = ({ report, onHelpClick }) => {
+        const calculateDistance = () => {
+            if (!ngoLocation || !report.latitude || !report.longitude) return null;
+            return getDistance(
+                ngoLocation.lat,
+                ngoLocation.lng,
+                report.latitude,
+                report.longitude
+            ).toFixed(1);
+        };
+
+        const distance = calculateDistance();
+
         return (
             <div className="report-card dark-theme">
                 <div className="report-image-container">
@@ -234,6 +298,13 @@ function NgoHomePage() {
                             {report.user?.contact || 'Contact not provided'}
                         </span>
                     </div>
+
+                    {distance && (
+                        <div className="distance-info">
+                            <i className="fas fa-location-arrow"></i>
+                            {distance} km away
+                        </div>
+                    )}
                     
                     <div className="report-meta">
                         <span className="report-date">

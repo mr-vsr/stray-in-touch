@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Donations as DonationsImage } from "../../assets";
 import { motion } from 'framer-motion';
 
@@ -51,13 +52,15 @@ function Donations() {
                         Join Our Community
                     </motion.button>
 
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="donations-cta-button secondary"
-                    >
-                        Donate
-                    </motion.button>
+                    <Link to="/donations">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="donations-cta-button secondary"
+                        >
+                            Donate
+                        </motion.button>
+                    </Link>
                 </motion.div>
             </motion.div>
         </section>

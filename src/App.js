@@ -25,6 +25,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/about" element={<About />} />
               <Route path="/type-of-login" element={<LoginType />} />
+              <Route path="/donations" element={<Donations />} /> {/* Moved to public routes */}
               <Route path="/user-login" element={<UserLogin />} />
               <Route path="/ngo-login" element={<NgoLogin />} />
               <Route path="/admin-login" element={<AdminLogin />} />

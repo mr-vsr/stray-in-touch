@@ -65,10 +65,6 @@ function Donations() {
         }
     };
 
-    if (!isLoggedIn) {
-        return <UserLogin state={{ from: 'donations' }} />;
-    }
-
     return (
         <motion.div
             className="donations-container"
@@ -225,4 +221,4 @@ function Donations() {
     );
 }
 
-export default Donations; 
+export default Donations;
