@@ -3,12 +3,28 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate} from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Login as LogIn } from "../../store/authSlice";
+import { Login as LogIn } from "../../store/authSlice"; // Renamed to avoid conflict
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
-function Login() {
+// Re-use or import the helper function from App.js if structured differently
+const fetchUserProfile = async (uid) => {
+    const userRef = collection(db, 'users'); // Query only 'users' collection for user login
+    const q = query(userRef, where('uid', '==', uid));
+    try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+        }
+    } catch (error) {
+         console.error(`Error searching users for UID ${uid}:`, error);
+    }
+    console.warn(`User profile not found in Firestore for UID: ${uid}`);
+    return null;
+};
+
+function UserLogin() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
@@ -34,7 +50,7 @@ function Login() {
         const formErrors = validateForm();
 
         if (Object.keys(formErrors).length > 0) {
-            setError({ 
+            setError({
                 code: 'validation-error',
                 message: Object.values(formErrors).join('. ')
             });
@@ -42,39 +58,49 @@ function Login() {
         }
 
         setIsLoading(true);
-        
+        setError(null); // Clear previous errors
+
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            const userAuth = userCredential.user;
 
-            // Check if user exists in users collection
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('uid', '==', user.uid));
-            const querySnapshot = await getDocs(q);
+            // Fetch the corresponding user profile from Firestore
+            const userProfile = await fetchUserProfile(userAuth.uid);
 
-            if (querySnapshot.empty) {
-                await auth.signOut();
-                throw { 
+            if (!userProfile || userProfile.role !== 'user') {
+                // If no profile found OR role is wrong, sign out and show error
+                await auth.signOut(); // Sign out from Firebase
+                throw {
                     code: 'auth/wrong-login-type',
-                    message: 'This login page is only for regular users. Please use the appropriate login option for NGOs or Admins.'
+                    message: 'Login failed. Please ensure you are using the correct login page for your account type (User, NGO, Admin) or that your profile exists.'
                 };
             }
 
+            // Dispatch combined data to Redux
             dispatch(LogIn({
-                userData: user,
-                isLoggedIn: true
+                 userData: {
+                   uid: userAuth.uid,
+                   email: userAuth.email,
+                   displayName: userProfile.name || userAuth.displayName,
+                   photoURL: userProfile.avatar || userAuth.photoURL,
+                   role: userProfile.role,
+                   contact: userProfile.contact,
+                   // Add other relevant fields
+                 },
+                 isLoggedIn: true
             }));
+
             navigate('/user-homepage');
+
         } catch (error) {
             let errorMessage;
-            
-            // Firebase returns error.code as a string
             switch (error?.code) {
                 case 'auth/wrong-password':
-                    errorMessage = 'Incorrect password. Please check your password and try again.';
+                case 'auth/invalid-credential':
+                    errorMessage = 'Incorrect email or password. Please check your credentials.';
                     break;
                 case 'auth/user-not-found':
-                    errorMessage = 'This email is not registered. Please sign up first.';
+                    errorMessage = 'No account found with this email address. Please check the email or sign up.';
                     break;
                 case 'auth/invalid-email':
                     errorMessage = 'Invalid email format. Please enter a valid email address.';
@@ -83,43 +109,43 @@ function Login() {
                     errorMessage = 'This account has been disabled. Please contact support.';
                     break;
                 case 'auth/too-many-requests':
-                    errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
+                    errorMessage = 'Access temporarily disabled due to too many failed login attempts. Please try again later or reset your password.';
                     break;
                 case 'auth/network-request-failed':
                     errorMessage = 'Network error. Please check your internet connection.';
                     break;
                 case 'auth/wrong-login-type':
-                    errorMessage = error.message;
+                    errorMessage = error.message; // Use the custom message
                     break;
                 default:
                     errorMessage = 'An error occurred during login. Please try again.';
             }
-            
-            setError({ 
+
+            setError({
                 code: error?.code || 'auth/unknown',
                 message: errorMessage
             });
-            console.error('Login error:', error); // This will help debug the error
+            console.error('Login error:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <motion.div 
+        <motion.div
             className="auth-container"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
         >
-            <motion.div 
+            <motion.div
                 className="auth-card"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
             >
                 <div className="auth-header">
-                    <motion.h1 
+                    <motion.h1
                         className="auth-title"
                         initial={{ y: -20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -127,7 +153,7 @@ function Login() {
                     >
                         Welcome Back
                     </motion.h1>
-                    <motion.p 
+                    <motion.p
                         className="auth-subtitle"
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -137,19 +163,20 @@ function Login() {
                     </motion.p>
                 </div>
 
-                <motion.form 
+                <motion.form
                     className="auth-form"
                     onSubmit={handleLogin}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
+                    noValidate
                 >
                     <div className="form-group">
                         <label className="form-label">Email</label>
                         <motion.input
                             whileFocus={{ scale: 1.01 }}
                             type="email"
-                            className="form-input"
+                            className={`form-input ${touched.email && !email ? 'error' : ''}`}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onBlur={() => handleBlur('email')}
@@ -163,7 +190,7 @@ function Login() {
                         <motion.input
                             whileFocus={{ scale: 1.01 }}
                             type="password"
-                            className="form-input"
+                            className={`form-input ${touched.password && !password ? 'error' : ''}`}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onBlur={() => handleBlur('password')}
@@ -176,8 +203,8 @@ function Login() {
                         className="auth-button"
                         type="submit"
                         disabled={isLoading}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                        whileTap={{ scale: isLoading ? 1 : 0.98 }}
                     >
                         {isLoading ? 'Signing in...' : 'Sign In'}
                     </motion.button>
@@ -192,10 +219,10 @@ function Login() {
                     </p>
                 </div>
             </motion.div>
-            
+
             {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </motion.div>
     );
 }
 
-export default Login;
+export default UserLogin;

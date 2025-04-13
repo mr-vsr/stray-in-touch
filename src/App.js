@@ -1,14 +1,16 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import './App.css'; // Ensure CSS is imported
-
-// Core Components (Load Eagerly)
+import './App.css';
 import { Header, Footer, ProtectedRoute, AccessDenied } from './components';
-import { PageLoader } from './components/Loading'; // Specific loader import
+import { PageLoader } from './components/Loading';
 import PageTransition from './components/PageTransition';
+import { useDispatch } from 'react-redux';
+import { onAuthStateChanged, signOut } from 'firebase/auth'; // Import signOut here
+import { auth, db } from './auth/firebase-config';
+import { Login, Logout } from './store/authSlice';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-// Page Components (Lazy Load)
 const LandingPage = React.lazy(() => import('./pages/landing-page/LandingPage'));
 const About = React.lazy(() => import('./pages/about/About'));
 const LoginType = React.lazy(() => import('./pages/type-of-login/LoginType'));
@@ -23,16 +25,73 @@ const UserHomePage = React.lazy(() => import('./pages/user-homepage/UserHomePage
 const NgoHomePage = React.lazy(() => import('./pages/ngo-homepage/NgoHomePage'));
 const AdminDashboard = React.lazy(() => import('./pages/admin-dashboard/AdminDashboard'));
 
+const fetchUserProfile = async (uid) => {
+    const collectionsToSearch = ['admins', 'NgoInfo', 'users'];
+    for (const collectionName of collectionsToSearch) {
+        const userRef = collection(db, collectionName);
+        const q = query(userRef, where('uid', '==', uid));
+        try {
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+            }
+        } catch (error) {
+             console.error(`Error searching ${collectionName} for UID ${uid}:`, error);
+        }
+    }
+    console.warn(`No profile found in Firestore for UID: ${uid}`);
+    return null;
+};
+
+
 function App() {
+  const dispatch = useDispatch();
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+      if (userAuth) {
+        const userProfile = await fetchUserProfile(userAuth.uid);
+
+        if (userProfile) {
+           dispatch(Login({
+             userData: {
+               uid: userAuth.uid,
+               email: userAuth.email,
+               displayName: userProfile.name || userAuth.displayName,
+               photoURL: userProfile.avatar || userProfile.banner || userAuth.photoURL,
+               role: userProfile.role,
+               contact: userProfile.contact,
+             },
+             isLoggedIn: true
+           }));
+        } else {
+            console.error(`User ${userAuth.uid} authenticated but no profile found. Logging out.`);
+            dispatch(Logout());
+            await signOut(auth); // Use the imported signOut function
+        }
+
+      } else {
+        dispatch(Logout());
+      }
+       setLoadingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, [dispatch]);
+
+  if (loadingAuth) {
+      return <PageLoader />;
+  }
+
   return (
     <Router>
-      <div className="app-container"> {/* Changed class name */}
+      <div className="app-container">
         <Header />
-        <main className="main-content"> {/* Added main content wrapper */}
+        <main className="main-content">
           <Suspense fallback={<PageLoader />}>
             <AnimatePresence mode="wait">
               <Routes>
-                {/* Public Routes */}
                 <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
                 <Route path="/about" element={<PageTransition><About /></PageTransition>} />
                 <Route path="/type-of-login" element={<PageTransition><LoginType /></PageTransition>} />
@@ -45,7 +104,6 @@ function App() {
                 <Route path="/admin-signup" element={<PageTransition><AdminSignup /></PageTransition>} />
                 <Route path="/access-denied" element={<PageTransition><AccessDenied /></PageTransition>} />
 
-                {/* Protected Routes */}
                 <Route
                   path="/user-homepage"
                   element={
@@ -71,8 +129,6 @@ function App() {
                   }
                 />
 
-                {/* Fallback or Not Found Route (Optional) */}
-                {/* <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} /> */}
               </Routes>
             </AnimatePresence>
           </Suspense>
