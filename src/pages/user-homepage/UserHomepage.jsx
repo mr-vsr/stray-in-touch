@@ -3,6 +3,7 @@ import { DonationsCta, Loader } from '../../components/index.js';
 import { db } from '../../auth/firebase-config.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { DonationHistory } from '../../components';
 
 function UserHomePage() {
   const [helpReports, setHelpReports] = useState([]);
@@ -11,7 +12,45 @@ function UserHomePage() {
   const [error, setError] = useState(null);
   const [loadingUserReports, setLoadingUserReports] = useState(false);
   const [loadingHelpReports, setLoadingHelpReports] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [donations, setDonations] = useState([]);
+  const [loadingDonations, setLoadingDonations] = useState(false);
 
+  useEffect(() => {
+    const auth = getAuth();
+    setCurrentUser(auth.currentUser);
+  }, []);
+
+  useEffect(() => {
+    const fetchDonations = async () => {
+      if (!currentUser) return;
+      
+      setLoadingDonations(true);
+      try {
+        const donationsQuery = query(
+          collection(db, 'donations'),
+          where('email', '==', currentUser.email)
+        );
+        
+        const donationsSnapshot = await getDocs(donationsQuery);
+        const donationsData = donationsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp?.toDate()
+        }));
+        
+        setDonations(donationsData);
+      } catch (error) {
+        console.error('Error fetching donations:', error);
+      } finally {
+        setLoadingDonations(false);
+      }
+    };
+
+    fetchDonations();
+  }, [currentUser]);
+
+  
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
@@ -118,6 +157,43 @@ function UserHomePage() {
     <div className="user-homepage-container">
       <div className="user-homepage-content">
         {error && <div className="error-message">{error}</div>}
+
+        {/* Donations Section */}
+        {currentUser && donations.length > 0 && (
+          <section className="donations-section">
+            <h2>Your Donations</h2>
+            <div className="donations-grid">
+              {loadingDonations ? (
+                <Loader 
+                  type="default"
+                  size="medium"
+                  text="Loading your donations..."
+                />
+              ) : (
+                donations.map(donation => (
+                  <div key={donation.id} className="donation-card">
+                    <div className="donation-header">
+                      <h3 className="donation-amount">₹{donation.amount}</h3>
+                      <span className="donation-date">
+                        {formatDate(donation.timestamp)}
+                      </span>
+                    </div>
+                    <div className="donation-content">
+                      <p className="donation-status">
+                        Status: <span className={donation.status}>{donation.status}</span>
+                      </p>
+                      {donation.address && (
+                        <p className="donation-address">
+                          <i className="fas fa-map-marker-alt"></i> {donation.address}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        )}
 
         {userReports.length > 0 && (
           <section className="user-reports-section">

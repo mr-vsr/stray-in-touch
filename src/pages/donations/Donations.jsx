@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { db } from '../../auth/firebase-config';
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { UserLogin } from '../../components';
 
 function Donations() {
@@ -47,7 +47,7 @@ function Donations() {
         try {
             const donationRef = await addDoc(collection(db, "donations"), {
                 ...donationData,
-                userId: user.uid,
+                userId: user?.uid || 'anonymous',
                 timestamp: new Date(),
                 status: 'pending'
             });
@@ -57,6 +57,10 @@ function Donations() {
                 // Simulate payment processing
                 setTimeout(() => {
                     setPaymentStatus('success');
+                    // Update the donation status in Firebase
+                    updateDoc(doc(db, "donations", donationRef.id), {
+                        status: 'success'
+                    });
                 }, 3000);
             }
         } catch (error) {
@@ -66,28 +70,13 @@ function Donations() {
     };
 
     return (
-        <motion.div
-            className="donations-container"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-        >
+        <motion.div className="donations-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
             <div className="donations-content">
-                <motion.h1
-                    initial={{ y: -20 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.2 }}
-                >
+                <motion.h1 initial={{ y: -20 }} animate={{ y: 0 }} transition={{ delay: 0.2 }}>
                     Make a Donation
                 </motion.h1>
 
-                <motion.form
-                    className="donations-form"
-                    onSubmit={handleSubmit}
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                >
+                <motion.form className="donations-form" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Name</label>
                         <input
@@ -96,7 +85,8 @@ function Donations() {
                             value={donationData.name}
                             onChange={handleChange}
                             required
-                            disabled
+                            disabled={isLoggedIn}
+                            placeholder="Enter your name"
                         />
                     </div>
 
@@ -108,7 +98,8 @@ function Donations() {
                             value={donationData.email}
                             onChange={handleChange}
                             required
-                            disabled
+                            disabled={isLoggedIn}
+                            placeholder="Enter your email"
                         />
                     </div>
 
@@ -120,7 +111,8 @@ function Donations() {
                             value={donationData.phone}
                             onChange={handleChange}
                             required
-                            disabled
+                            disabled={isLoggedIn}
+                            placeholder="Enter your phone number"
                         />
                     </div>
 
@@ -205,6 +197,7 @@ function Donations() {
                             </div>
                         )}
                         <button
+                            className="dialog-close-button"
                             onClick={() => {
                                 setShowPaymentDialog(false);
                                 if (paymentStatus === 'success') {
@@ -212,7 +205,7 @@ function Donations() {
                                 }
                             }}
                         >
-                            Close
+                            {paymentStatus === 'success' ? 'Return Home' : 'Close'}
                         </button>
                     </div>
                 </div>
