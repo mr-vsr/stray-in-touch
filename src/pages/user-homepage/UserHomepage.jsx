@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DonationsCta, Loader, DonationHistory } from '../../components/index.js';
 import { db } from '../../auth/firebase-config.js';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore'; // Import Timestamp
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 function UserHomePage() {
@@ -12,23 +12,58 @@ function UserHomePage() {
   const [error, setError] = useState(null);
   const [loadingUserReports, setLoadingUserReports] = useState(false);
   const [loadingHelpReports, setLoadingHelpReports] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // Holds the user object from Auth state
+  const [currentUserProfile, setCurrentUserProfile] = useState(null); // Holds profile data from Firestore
   const [donations, setDonations] = useState([]);
   const [loadingDonations, setLoadingDonations] = useState(false);
 
+  // Listener for Firebase Auth state changes
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged(user => {
-      setCurrentUser(user);
+      setCurrentUser(user); // Update the basic auth user state
       if (!user) {
+        setCurrentUserProfile(null); // Clear profile if logged out
         setLoading(false);
       }
     });
     return () => unsubscribe();
   }, []);
 
+  // Fetch user profile from Firestore when currentUser changes
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+        if (currentUser && currentUser.uid) {
+            // Assuming user profile is in 'users' collection
+            const userRef = collection(db, 'users');
+            const q = query(userRef, where('uid', '==', currentUser.uid));
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    // Assuming only one document per uid
+                    setCurrentUserProfile({ id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() });
+                } else {
+                    console.warn(`User profile not found in Firestore for UID: ${currentUser.uid}`);
+                    setCurrentUserProfile(null); // Handle case where profile doesn't exist
+                }
+            } catch (err) {
+                console.error("Error fetching user profile:", err);
+                setError("Could not load user profile.");
+                setCurrentUserProfile(null);
+            }
+        } else {
+            setCurrentUserProfile(null); // Clear profile if no user
+        }
+    };
+
+    fetchUserProfile();
+  }, [currentUser]); // Re-run when currentUser changes
+
+
+  // Fetch Donations (depends on currentUser email)
   useEffect(() => {
     const fetchDonations = async () => {
+      // Use email from basic auth object (usually reliable)
       if (!currentUser || !currentUser.email) return;
 
       setLoadingDonations(true);
@@ -62,6 +97,7 @@ function UserHomePage() {
   }, [currentUser]);
 
 
+  // Fetch Help Reports and User Reports (depends on currentUserProfile)
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
@@ -70,8 +106,7 @@ function UserHomePage() {
       setLoadingUserReports(true);
 
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+        // Fetch Help Reports (no change needed here)
         const helpDataSnapshot = await getDocs(collection(db, 'helpData'));
         const helpData = helpDataSnapshot.docs.map(doc => {
           const data = doc.data();
@@ -80,19 +115,19 @@ function UserHomePage() {
             ngoName: data.ngoName || 'Unknown NGO',
             ngoAddress: data.ngoAddress || 'Address not specified',
             descriptionOfHelp: data.descriptionOfHelp || 'Details not provided',
-            timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : null, 
-
+            timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : null,
             reportId: data.reportId
           };
         });
         setHelpReports(helpData);
         setLoadingHelpReports(false);
 
-        // Fetch user's reports (no change here)
-        if (user && user.phoneNumber) {
+        // *** FIX: Fetch user's reports using contact from currentUserProfile ***
+        if (currentUserProfile && currentUserProfile.contact) {
+          const userContact = currentUserProfile.contact;
           const userReportsQuery = query(
             collection(db, 'strayInfo'),
-            where('contact', '==', user.phoneNumber)
+            where('contact', '==', userContact) // Compare strayInfo.contact with userProfile.contact
           );
           const userReportsSnapshot = await getDocs(userReportsQuery);
           const userReportsData = userReportsSnapshot.docs.map(doc => ({
@@ -102,9 +137,9 @@ function UserHomePage() {
           }));
           setUserReports(userReportsData);
         } else {
-            setUserReports([]);
-            if (user) { // Only warn if logged in but no phone number
-                 console.warn("Current user's phone number not available for fetching user reports.");
+            setUserReports([]); // Clear if no profile or contact found
+            if (currentUser) { // Only warn if logged in but profile/contact missing
+                 console.warn("Current user's profile or contact number not available for fetching user reports.");
             }
         }
          setLoadingUserReports(false);
@@ -119,16 +154,16 @@ function UserHomePage() {
       }
     };
 
+    // Fetch reports only when the profile is potentially loaded (currentUser state is determined)
     if (currentUser !== null) {
         fetchReports();
     }
 
-  }, [currentUser]);
+  }, [currentUser, currentUserProfile]); // Depend on both auth state and profile state
 
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Date not available';
-    // Ensure timestamp is a Date object before formatting
     const date = timestamp instanceof Date ? timestamp : timestamp?.toDate?.();
     if (!date) return 'Invalid Date';
     return date.toLocaleDateString('en-US', {
@@ -156,7 +191,7 @@ function UserHomePage() {
             className="info-card glass-card"
             whileHover={{ y: -5 }}
             transition={{ duration: 0.3 }}
-            style={{ '--item-index': index }} 
+            style={{ '--item-index': index }}
           >
             <div className="info-card-header">
               <h3 className="info-card-title">{report.ngoName}</h3>
@@ -166,7 +201,6 @@ function UserHomePage() {
               <p className="info-card-description">{report.descriptionOfHelp}</p>
               <div className="info-card-details-section">
                  <i className="fas fa-map-marker-alt"></i>
-                 {/* *** FIX: Use report.ngoAddress directly *** */}
                  <span>{report.ngoAddress}</span>
               </div>
                <div className="info-card-meta">

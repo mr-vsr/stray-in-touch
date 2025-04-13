@@ -3075,7 +3075,6 @@ body {
     color: var(--text-light-gray);
 }
 
-/* UserHomepage Styles*/
 .user-homepage {
   min-height: 100vh;
   padding: 2rem;
@@ -3117,11 +3116,20 @@ body {
   margin-bottom: 2.5rem;
 }
 
-/* .user-action-card uses .info-card styles */
 .user-action-card {
-  /* Inherits from .info-card */
-  padding: 1.5rem; /* Reaffirm padding if needed */
+  padding: 1.5rem;
+  background: var(--background-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-base);
+  display: flex;
+  flex-direction: column;
 }
+.user-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
 
 .action-header {
   display: flex;
@@ -3150,22 +3158,131 @@ body {
   flex-grow: 1;
 }
 
-/* Use general .button styles */
 .user-action-button {
-  /* Inherits styles from .button and .button-primary */
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius-full);
   align-self: flex-start;
-  margin-top: auto; /* Push to bottom if needed */
+  margin-top: auto;
+  background: var(--primary-orange);
+  color: var(--text-white);
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+.user-action-button:hover {
+  background: var(--primary-orange-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-button-hover);
 }
 
-/* Reports Section */
+
+.report-card.user-report {
+  background: var(--background-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-base);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 0;
+  border: none;
+}
+
+.report-card.user-report:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.report-card.user-report .report-image-container {
+  height: 180px;
+  margin: 0 0 1rem 0;
+  overflow: hidden;
+}
+
+.report-card.user-report .report-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.report-card.user-report:hover .report-image {
+  transform: scale(1.05);
+}
+
+.report-card.user-report .report-details {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.report-card.user-report .report-title {
+  font-size: 1rem;
+  color: var(--text-dark);
+  font-weight: 500;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.report-card.user-report .report-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-light-gray);
+  font-size: 0.8rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-extra-light);
+}
+.report-card.user-report .report-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.report-card.user-report .status-badge-corner {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.report-card.user-report .status-badge-corner.pending {
+  background: var(--status-pending-background);
+  color: var(--status-pending-text);
+}
+.report-card.user-report .status-badge-corner.resolved,
+.report-card.user-report .status-badge-corner.complete {
+  background: var(--status-resolved-background);
+  color: var(--status-resolved-text);
+}
+
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
 .reports-section {
   background: var(--background-card, rgba(255, 255, 255, 0.8));
   padding: 2rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  margin-bottom: 2.5rem; /* Added margin */
+  margin-bottom: 2.5rem;
 }
 
 .reports-header {
@@ -3189,20 +3306,22 @@ body {
   gap: 0.75rem;
   flex-wrap: wrap;
 }
-/* .filter-button styles are defined globally */
 
-/* .reports-grid uses .info-grid styles */
-.reports-grid {
-    /* Inherits from .info-grid */
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-}
-
-/* .report-card uses .info-card styles with minor overrides */
 .report-card {
-  /* Inherits from .info-card */
   border: 1px solid var(--border-extra-light);
-  border-radius: var(--radius-md); /* Slightly smaller radius */
+  border-radius: var(--radius-md);
+  background: var(--background-white); /* Ensure consistent background */
+  overflow: hidden;
+  transition: var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm); /* Use smaller default shadow */
 }
+.report-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md); /* Use medium shadow on hover */
+}
+
 
 .report-image {
   width: 100%;
@@ -3210,9 +3329,11 @@ body {
   object-fit: cover;
   display: block;
 }
-.report-image-container { /* Added container for consistency */
+.report-image-container {
   height: 180px;
-  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+  /* Adjusted margin previously for user-report, might not be needed for general */
+  /* margin: -1.5rem -1.5rem 1.5rem -1.5rem; */
+  margin: 0 0 1rem 0;
   overflow: hidden;
 }
 .report-card:hover .report-image {
@@ -3245,7 +3366,7 @@ body {
 }
 
 .report-status.resolved,
-.report-status.complete { /* Added complete */
+.report-status.complete {
   background: var(--status-resolved-background);
   color: var(--status-resolved-text);
 }
@@ -3281,6 +3402,78 @@ body {
   margin-top: auto;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-extra-light);
+}
+.report-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .user-homepage {
+    padding: 1.5rem;
+  }
+  .user-welcome {
+    font-size: 1.6rem;
+  }
+  .reports-grid {
+     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .user-header {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 1rem;
+  }
+  .reports-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .reports-filters {
+    width: 100%;
+    justify-content: flex-start;
+  }
+   .reports-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Adjust back or keep smaller */
+  }
+  .user-actions {
+      grid-template-columns: 1fr; /* Stack actions */
+  }
+}
+
+@media (max-width: 480px) {
+  .user-homepage {
+    padding: 1rem;
+  }
+  .user-action-card,
+  .reports-section,
+  .report-details,
+  .report-card.user-report .report-details { /* Target specific details padding */
+    padding: 1rem;
+  }
+  .user-welcome {
+    font-size: 1.4rem;
+  }
+  .reports-title {
+     font-size: 1.3rem;
+  }
+  .user-actions,
+  .reports-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem; /* Reduce gap */
+  }
+  .report-image,
+  .report-card.user-report .report-image-container { /* Target specific image height */
+    height: 160px;
+  }
+  .report-card.user-report .report-title {
+    font-size: 1.05rem; /* Match general report title */
+  }
 }
 
 /* AdminDashboard Styles      */
