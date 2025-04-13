@@ -47,106 +47,64 @@ function Header() {
   };
 
   return (
-    <motion.div
-      className='navbar-container updated-section'
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className='navbar-content'>
-        <motion.div
-          className='logo-container'
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.2 }}
-        >
-          <h2 className='logo-name-container'>
-            <Link to="/" style={{ ...logoLinkStyle, background: 'linear-gradient(135deg, #0062ff, #da61ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              StrayInTouch
-            </Link>
-          </h2>
+    <motion.header className="header" initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+      <div className="header-content container-max-width">
+        <motion.div className="header-logo" whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+          <Link to="/" className="header-logo-link">
+            <h2 className="header-logo-name">StrayInTouch</h2>
+          </Link>
         </motion.div>
 
-        <div className='mobile-menu-button' onClick={toggleMenu}>
-          {isMenuOpen ? <FaTimes /> : <FaBars />}
-        </div>
-
-        <div className={`navbar-buttons-container ${isMenuOpen ? 'active' : ''}`}>
+        <nav className="header-nav-links">
           <ul>
-            <motion.li
-              className='navbar-button'
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link to="/" style={logoGradientStyle}>Home</Link>
+            <motion.li className="header-nav-item">
+              <Link to="/" className="header-nav-link">Home</Link>
             </motion.li>
-            <motion.li
-              className='navbar-button'
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Link to="/about" style={logoGradientStyle}>About</Link>
+            <motion.li className="header-nav-item">
+              <Link to="/about" className="header-nav-link">About</Link>
             </motion.li>
             {isLoggedIn && (
               <>
-                <motion.li
-                  className='navbar-button'
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link to="/user-homepage" style={logoGradientStyle}>User Home</Link>
+                <motion.li className="header-nav-item">
+                  <Link to="/user-homepage" className="header-nav-link">User Home</Link>
                 </motion.li>
-                <motion.li
-                  className='navbar-button'
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link to="/ngo-homepage" style={logoGradientStyle}>NGO Home</Link>
+                <motion.li className="header-nav-item">
+                  <Link to="/ngo-homepage" className="header-nav-link">NGO Home</Link>
                 </motion.li>
-                <motion.li
-                  className='navbar-button'
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link to="/admin-dashboard" style={logoGradientStyle}>Admin</Link>
+                <motion.li className="header-nav-item">
+                  <Link to="/admin-dashboard" className="header-nav-link">Admin</Link>
                 </motion.li>
               </>
             )}
           </ul>
+        </nav>
+
+        <div className="header-action-buttons">
+          {!isLoggedIn ? (
+            <Link to="/type-of-login">
+              <motion.button className="header-login-button" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                Login
+              </motion.button>
+            </Link>
+          ) : (
+            <motion.button className="header-login-button" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={logout}>
+              Logout
+            </motion.button>
+          )}
+          
+          <Link to="/donations">
+            <motion.button className="header-donate-button" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              Donate
+            </motion.button>
+          </Link>
         </div>
 
-        <div className={`button-container-navbar ${isMenuOpen ? 'active' : ''}`}>
-          {isLoggedIn ? (
-            <>
-              <span className="user-name">{userName}</span>
-              <motion.button
-                className='navbar-logout-button updated-button'
-                onClick={logout}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Logout
-              </motion.button>
-            </>
-          ) : (
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link to="/type-of-login" className="updated-button" style={{ textDecoration: 'none' }}>Login</Link>
-            </motion.div>
-          )}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link to="/donations" className="navbar-donate-button updated-button" style={{ textDecoration: 'none' }}>
-              Donate
-            </Link>
-          </motion.div>
-        </div>
+        <button className="header-mobile-menu-button" onClick={toggleMenu} aria-label="Toggle menu">
+          {isMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
       </div>
-    </motion.div>
-  )
+    </motion.header>
+  );
 }
 
 export default Header

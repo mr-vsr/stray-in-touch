@@ -1,25 +1,30 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { FaCheckCircle } from 'react-icons/fa';
 
-function SuccessDialog({ onClose }) {
+const SuccessDialog = ({ onClose }) => {
     return (
-        <div className="success-dialog-overlay">
-            <motion.div 
-                className="success-dialog"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+        <motion.div
+            className="success-dialog-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
+            <motion.div
+                className="success-dialog-container"
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
             >
                 <div className="success-dialog-content">
-                    <div className="success-icon">
-                        <i className="fas fa-check-circle"></i>
+                    <div className="success-dialog-icon">
+                        <FaCheckCircle size={32} />
                     </div>
-                    <h3 className="success-dialog-heading">Thank You!</h3>
+                    <h2 className="success-dialog-title">Thank You!</h2>
                     <p className="success-dialog-message">
                         Your report has been successfully submitted. We will review it and take necessary action.
                     </p>
-                    <button 
+                    <button
                         className="success-dialog-button"
                         onClick={onClose}
                     >
@@ -27,8 +32,8 @@ function SuccessDialog({ onClose }) {
                     </button>
                 </div>
             </motion.div>
-        </div>
+        </motion.div>
     );
-}
+};
 
-export default SuccessDialog; 
+export default SuccessDialog;

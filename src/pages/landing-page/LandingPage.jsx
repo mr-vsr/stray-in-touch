@@ -1,26 +1,20 @@
-import React from 'react'
-import {Hero, KnowAboutUs, WhatWedo, DonationsCta } from "../../components/index.js"
+import React from 'react';
+import { Hero, KnowAboutUs, WhatWedo, DonationsCta } from "../../components/index.js";
 
 function LandingPage() {
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <div className="page-container"> {/* Use general page container if needed */}
             <main>
-                <section className="relative z-10" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}>
+                <section className="landing-page-section hero-section-wrapper">
                     <Hero />
                 </section>
-
-                <section className="relative z-20 py-16" style={{
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                    padding: '2rem'
-                }}>
+                <section className="landing-page-section">
                     <KnowAboutUs />
                 </section>
-
-                <section className="relative z-30" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}>
+                <section className="landing-page-section">
                     <WhatWedo />
                 </section>
-
-                <section className="relative z-40" style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}>
+                <section className="landing-page-section">
                     <DonationsCta />
                 </section>
             </main>

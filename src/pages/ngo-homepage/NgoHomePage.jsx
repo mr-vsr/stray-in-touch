@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../../auth/firebase-config';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { db } from '../../auth/firebase-config'; // Ensure correct path
 import {
     collection,
     getDocs,
@@ -11,9 +11,25 @@ import {
     Timestamp,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { motion } from 'framer-motion'; // Import motion
+import { Loader } from '../../components/index'; // Ensure Loader is imported
 
-// Add distance calculation utility function
+// Debounce function (optional, but good for performance with rapid changes)
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Utility: Calculate Distance
 const getDistance = (lat1, lon1, lat2, lon2) => {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
     const R = 6371; // Earth's radius in KM
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -22,159 +38,234 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in KM
+    const distance = R * c;
+    return !isNaN(distance) ? distance : null; // Return null if calculation results in NaN
 };
+
+// Utility: Format Date
+const formatDate = (timestamp) => {
+    if (timestamp && timestamp.toDate) {
+        return timestamp.toDate().toLocaleDateString(undefined, {
+             year: 'numeric', month: 'short', day: 'numeric'
+        });
+    }
+    return 'N/A';
+};
+
+// Utility: Normalize Contact Number
+const normalizeContact = (contact) => {
+    if (!contact) return '';
+    return String(contact).replace(/\D/g, ''); // Removes non-digit characters
+};
+
+// Optimized Report Card Component
+const ReportCard = React.memo(({ report, ngoLocation, onHelpClick }) => {
+    const distance = useMemo(() => {
+        return getDistance(
+            ngoLocation?.lat,
+            ngoLocation?.lng,
+            report.latitude,
+            report.longitude
+        );
+    }, [ngoLocation, report.latitude, report.longitude]);
+
+    const distanceText = distance !== null ? `${distance.toFixed(1)} km away` : null;
+    const mapLink = report.latitude && report.longitude ? `https://www.google.com/maps/search/?api=1&query=${report.latitude},${report.longitude}` : null;
+
+    return (
+        <motion.div
+            className="info-card" // Use generic info-card
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -5 }}
+            transition={{ duration: 0.3 }}
+        >
+            {report.imageUrl && (
+                 <div className="info-card-image-container">
+                    <img
+                        src={report.imageUrl}
+                        alt={report.description || 'Reported animal'}
+                        className="info-card-image"
+                        loading="lazy" // Lazy load images
+                    />
+                </div>
+            )}
+            <span className={`status-badge-corner ${report.status}`}>
+                 {report.status}
+            </span>
+
+            <div className="info-card-content">
+                <p className="info-card-description">{report.description || 'No description provided.'}</p>
+
+                <div className="info-card-details-section">
+                    <span className="info-card-detail-name">
+                        Reported by: {report.user?.name || 'Anonymous'}
+                    </span>
+                    <span className="info-card-detail-contact">
+                        <i className="fas fa-phone"></i>
+                        {report.user?.contact || 'N/A'}
+                    </span>
+                </div>
+
+                {distanceText && (
+                    <div className="info-card-distance">
+                        <i className="fas fa-location-arrow"></i>
+                        {distanceText}
+                    </div>
+                )}
+
+                <div className="info-card-meta">
+                    <span className="info-card-date">
+                        <i className="far fa-clock"></i>
+                        {formatDate(report.timestamp)}
+                    </span>
+                     {mapLink && (
+                        <a
+                            href={mapLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="info-card-map-link"
+                            title="View on Google Maps" // Added title for accessibility
+                        >
+                            <i className="fas fa-map-marker-alt"></i>
+                            View Map
+                        </a>
+                    )}
+                </div>
+
+                {report.status === 'pending' && (
+                    <div className="info-card-actions">
+                        <button
+                            className="info-card-button primary button-ripple" // Use generic button classes
+                            onClick={() => onHelpClick(report)}
+                        >
+                            <i className="fas fa-hands-helping"></i>
+                            Provide Help
+                        </button>
+                    </div>
+                )}
+
+                 {report.ngo?.name && ( // Display NGO response if available
+                    <div className="ngo-response-section">
+                        <h4>Help Provided By: {report.ngo.name}</h4>
+                        {report.ngo.helpDescription && <p>{report.ngo.helpDescription}</p>}
+                        <p>Address: {report.ngo.address || 'N/A'}</p>
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    );
+});
 
 function NgoHomePage() {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null); // State for user-facing errors
+    const [error, setError] = useState(null);
     const [selectedReport, setSelectedReport] = useState(null);
-    const [statusFilter, setStatusFilter] = useState('all'); // Default to 'pending' might be better UX
+    const [statusFilter, setStatusFilter] = useState('pending'); // Default to pending
     const [currentNgo, setCurrentNgo] = useState(null);
     const [showHelpDialog, setShowHelpDialog] = useState(false);
-    const [helpData, setHelpData] = useState({
-        description: ''
-    });
-    const [isSubmittingHelp, setIsSubmittingHelp] = useState(false); // Loading state for help submission
+    const [helpDescription, setHelpDescription] = useState('');
+    const [isSubmittingHelp, setIsSubmittingHelp] = useState(false);
     const [ngoLocation, setNgoLocation] = useState(null);
-    const [loadingLocation, setLoadingLocation] = useState(true);
+    const [searchTerm, setSearchTerm] = useState(''); // State for search
 
-    // Fetch Current NGO Details
-    useEffect(() => {
-        const fetchCurrentNgo = async () => {
-            setError(null);
-            try {
-                const auth = getAuth();
-                const currentUser = auth.currentUser;
-                if (currentUser) {
-                    const q = query(collection(db, 'NgoInfo'), where('email', '==', currentUser.email));
-                    const ngoDocSnapshot = await getDocs(q);
-                    if (!ngoDocSnapshot.empty) {
-                         // Get data and ID
-                        const ngoDoc = ngoDocSnapshot.docs[0];
-                        setCurrentNgo({ id: ngoDoc.id, ...ngoDoc.data() });
-                    } else {
-                        console.warn("No NGO document found for email:", currentUser.email);
-                         setError("Could not find your NGO details. Please ensure your profile is set up.");
+    // Fetch Current NGO Details (Memoized)
+    const fetchCurrentNgo = useCallback(async () => {
+        setError(null);
+        try {
+            const authInstance = getAuth();
+            const currentUser = authInstance.currentUser;
+            if (currentUser) {
+                const q = query(collection(db, 'NgoInfo'), where('email', '==', currentUser.email));
+                const ngoDocSnapshot = await getDocs(q);
+                if (!ngoDocSnapshot.empty) {
+                    const ngoDoc = ngoDocSnapshot.docs[0];
+                    const ngoData = { id: ngoDoc.id, ...ngoDoc.data() };
+                    setCurrentNgo(ngoData);
+                    // Attempt to get location from address
+                    if (ngoData.address) {
+                       // Simple check if lat/lng are already stored (ideal)
+                       if(ngoData.latitude && ngoData.longitude) {
+                           setNgoLocation({ lat: ngoData.latitude, lng: ngoData.longitude });
+                       } else {
+                           // Fallback: Geocode address (use only if necessary and secure API key)
+                           // Consider doing this on the backend or during signup for performance/security
+                           console.warn("Geocoding address - consider storing coordinates directly.");
+                           // Example with fetch (replace with your geocoding setup)
+                           // const response = await fetch(`GEOCODING_API_ENDPOINT?address=${encodeURIComponent(ngoData.address)}&key=YOUR_API_KEY`);
+                           // const data = await response.json();
+                           // if (data.results?.[0]?.geometry?.location) {
+                           //     setNgoLocation(data.results[0].geometry.location);
+                           // }
+                       }
                     }
                 } else {
-                     console.warn("No logged-in user found.");
-                    // Handle case where user is not logged in (maybe redirect?)
+                    setError("Could not find your NGO details. Please ensure your profile is set up correctly.");
                 }
-            } catch (error) {
-                console.error("Error fetching NGO details:", error);
-                setError("An error occurred while fetching your NGO details.");
+            } else {
+                 setError("You must be logged in as an NGO to view this page.");
             }
-        };
-        fetchCurrentNgo();
+        } catch (err) {
+            console.error("Error fetching NGO details:", err);
+            setError("An error occurred while fetching your NGO details.");
+        }
     }, []);
 
-    // Add function to fetch NGO location
-    useEffect(() => {
-        const fetchNgoLocation = async () => {
-            try {
-                const auth = getAuth();
-                const currentUser = auth.currentUser;
-                if (currentUser) {
-                    const q = query(collection(db, 'NgoInfo'), where('email', '==', currentUser.email));
-                    const ngoDocSnapshot = await getDocs(q);
-                    if (!ngoDocSnapshot.empty) {
-                        const ngoDoc = ngoDocSnapshot.docs[0];
-                        const ngoData = ngoDoc.data();
-                        
-                        // Use Google Maps Geocoding API to get coordinates
-                        const response = await fetch(
-                            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(ngoData.address)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
-                        );
-                        const data = await response.json();
-                        
-                        if (data.results && data.results[0]) {
-                            const location = data.results[0].geometry.location;
-                            setNgoLocation({
-                                lat: location.lat,
-                                lng: location.lng
-                            });
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching NGO location:", error);
-            } finally {
-                setLoadingLocation(false);
-            }
-        };
+    // Fetch Reports (Memoized and Optimized)
+    const fetchReportsAndUsers = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Fetch users only once or when needed
+            const usersCollection = collection(db, 'users');
+            const usersSnapshot = await getDocs(usersCollection);
+            const userMap = new Map(usersSnapshot.docs.map(doc => {
+                const userData = doc.data();
+                const normalizedContact = normalizeContact(userData.contact);
+                return normalizedContact ? [normalizedContact, { id: doc.id, ...userData }] : null;
+            }).filter(Boolean)); // Filter out null entries if contact is missing
 
-        fetchNgoLocation();
-    }, []);
 
-    // Fetch Reports (Optimized)
-    useEffect(() => {
-        const fetchReportsAndUsers = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                // 1. Fetch all users ONCE
-                const usersCollection = collection(db, 'users');
-                const usersSnapshot = await getDocs(usersCollection);
-                const userMap = new Map(); // Use a Map for efficient lookups
+            const reportsCollection = collection(db, 'strayInfo');
+            const reportsSnapshot = await getDocs(reportsCollection);
 
-                // Helper to normalize contact numbers
-                 const normalizeContact = (contact) => {
-                    if (!contact) return '';
-                    // Removes non-digit characters
-                    return String(contact).replace(/\D/g, '');
+            const reportsList = reportsSnapshot.docs.map(doc => {
+                const reportData = doc.data();
+                const reportContact = normalizeContact(reportData.contact);
+                const userData = userMap.get(reportContact); // Efficient lookup
+                const status = reportData.status || 'pending';
+
+                return {
+                    id: doc.id,
+                    ...reportData,
+                    status: status,
+                    user: userData || null,
+                    timestamp: reportData.timestamp instanceof Timestamp ? reportData.timestamp : null
                 };
+            });
 
+            setReports(reportsList);
 
-                usersSnapshot.docs.forEach(doc => {
-                    const userData = doc.data();
-                    const normalizedContact = normalizeContact(userData.contact);
-                    if (normalizedContact) {
-                        userMap.set(normalizedContact, { id: doc.id, ...userData });
-                    }
-                });
+        } catch (err) {
+            console.error("Error fetching reports:", err);
+            setError("Failed to fetch reports. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    }, []); // Empty dependency array - fetch once
 
-                // 2. Fetch all reports
-                const reportsCollection = collection(db, 'strayInfo');
-                const reportsSnapshot = await getDocs(reportsCollection);
-
-                // 3. Map reports and lookup users efficiently
-                const reportsList = reportsSnapshot.docs.map(doc => {
-                    const reportData = doc.data();
-                    const reportContact = normalizeContact(reportData.contact); // Use reportData.contact
-                    const userData = reportContact ? userMap.get(reportContact) : null; // Efficient lookup
-
-                    // Default status if missing (should be set on creation ideally)
-                    const status = reportData.status || 'pending';
-
-                    return {
-                        id: doc.id,
-                        ...reportData,
-                        status: status, // Ensure status exists
-                        user: userData, // Attach fetched user data (or null)
-                        // Ensure timestamp is handled correctly (it's an object)
-                        timestamp: reportData.timestamp instanceof Timestamp ? reportData.timestamp : null
-                    };
-                });
-
-                setReports(reportsList);
-
-            } catch (error) {
-                console.error("Error fetching reports:", error);
-                setError("Failed to fetch reports. Please try again later.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
+    // Initial Data Load
+    useEffect(() => {
+        fetchCurrentNgo();
         fetchReportsAndUsers();
-    }, []); // Runs once on mount
+    }, [fetchCurrentNgo, fetchReportsAndUsers]);
 
     // Handle Help Dialog Submission
-    const handleHelpSubmit = async () => {
-        if (!selectedReport || !helpData.description || !currentNgo || isSubmittingHelp) {
-            setError("Please provide help description and ensure you're logged in as an NGO.");
+    const handleHelpSubmit = async (e) => {
+        e.preventDefault(); // Prevent default form submission
+        if (!selectedReport || !helpDescription.trim() || !currentNgo || isSubmittingHelp) {
+            setError("Please provide help description."); // Simplified error
             return;
         }
 
@@ -182,188 +273,113 @@ function NgoHomePage() {
         setError(null);
 
         try {
-            // Add help data to helpData collection
-            await addDoc(collection(db, 'helpData'), {
+            const helpDocData = {
                 reportId: selectedReport.id,
                 ngoId: currentNgo.id,
                 ngoName: currentNgo.name,
                 ngoAddress: currentNgo.address,
-                descriptionOfHelp: helpData.description,
-                timestamp: new Date()
-            });
+                descriptionOfHelp: helpDescription,
+                timestamp: Timestamp.now() // Use Firestore Timestamp
+            };
+            await addDoc(collection(db, 'helpData'), helpDocData);
 
-            // Update report status to complete
             const reportRef = doc(db, 'strayInfo', selectedReport.id);
             await updateDoc(reportRef, {
                 status: 'complete',
-                ngo: {
+                ngo: { // Store minimal NGO info needed for display
                     id: currentNgo.id,
                     name: currentNgo.name,
                     address: currentNgo.address,
-                    helpDescription: helpData.description
+                    helpDescription: helpDescription // Store description here too if needed
                 }
             });
 
-            // Update local state
-            setReports(reports.map(report =>
+            // Update local state efficiently
+            setReports(prevReports => prevReports.map(report =>
                 report.id === selectedReport.id
-                    ? {
-                        ...report,
-                        status: 'complete',
-                        ngo: {
-                            id: currentNgo.id,
-                            name: currentNgo.name,
-                            address: currentNgo.address,
-                            helpDescription: helpData.description
-                        }
-                    }
+                    ? { ...report, status: 'complete', ngo: helpDocData } // Update with help data
                     : report
             ));
 
-            // Reset form and close dialog
             setShowHelpDialog(false);
             setSelectedReport(null);
-            setHelpData({ description: '' });
+            setHelpDescription('');
 
-        } catch (error) {
-            console.error("Error submitting help data:", error);
+        } catch (err) {
+            console.error("Error submitting help data:", err);
             setError("Failed to submit help details. Please try again.");
         } finally {
             setIsSubmittingHelp(false);
         }
     };
 
-    // Handle clicking the "Provide Help" button
+    // Handle clicking "Provide Help"
     const handleHelpClick = (report) => {
         if (!currentNgo?.name || !currentNgo?.address) {
-            setError("Please complete your NGO profile before providing help.");
+            setError("Please ensure your NGO profile (name and address) is complete before providing help.");
             return;
         }
         setSelectedReport(report);
-        setHelpData({ description: '' });
+        setHelpDescription(''); // Reset description
         setShowHelpDialog(true);
+        setError(null); // Clear previous dialog errors
     };
 
-    // Filter reports based on status
-    const filteredReports = reports.filter(report =>
-        statusFilter === 'all' ? true : report.status === statusFilter
-    );
+    // Debounced search handler
+    const debouncedSearch = useCallback(debounce((term) => {
+        setSearchTerm(term);
+    }, 300), []); // 300ms debounce
 
-    // Format Timestamp for display
-    const formatDate = (timestamp) => {
-        if (timestamp && timestamp.toDate) {
-            return timestamp.toDate().toLocaleDateString(undefined, { // Use locale default format
-                 year: 'numeric', month: 'short', day: 'numeric'
-            });
-        }
-        return 'Date not available';
+    const handleSearchChange = (e) => {
+        debouncedSearch(e.target.value);
     };
 
-    // Update ReportCard component to include distance
-    const ReportCard = ({ report, onHelpClick }) => {
-        const calculateDistance = () => {
-            if (!ngoLocation || !report.latitude || !report.longitude) return null;
-            return getDistance(
-                ngoLocation.lat,
-                ngoLocation.lng,
-                report.latitude,
-                report.longitude
-            ).toFixed(1);
-        };
+    // Filter reports based on status and search term
+    const filteredReports = useMemo(() => {
+        return reports.filter(report => {
+            const matchesFilter = statusFilter === 'all' || report.status === statusFilter;
+            const matchesSearch = searchTerm === '' ||
+                report.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                report.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                report.locationDescription?.toLowerCase().includes(searchTerm.toLowerCase()); // Add location search
+            return matchesFilter && matchesSearch;
+        });
+    }, [reports, statusFilter, searchTerm]);
 
-        const distance = calculateDistance();
 
+    // Main component render
+    if (loading && reports.length === 0) { // Show loader only on initial load
         return (
-            <div className="report-card dark-theme">
-                <div className="report-image-container">
-                    <img 
-                        src={report.imageUrl || 'https://via.placeholder.com/400x200'} 
-                        alt={report.description} 
-                        className="report-image"
-                    />
-                    <span className={`report-status ${report.status}`}>
-                        {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
-                    </span>
-                </div>
-                
-                <div className="report-content">
-                    <p className="report-description">{report.description}</p>
-                    
-                    <div className="reporter-info">
-                        <span className="reporter-name">
-                            {report.user?.name || 'Anonymous Reporter'}
-                        </span>
-                        <span className="reporter-contact">
-                            <i className="fas fa-phone"></i>
-                            {report.user?.contact || 'Contact not provided'}
-                        </span>
-                    </div>
-
-                    {distance && (
-                        <div className="distance-info">
-                            <i className="fas fa-location-arrow"></i>
-                            {distance} km away
-                        </div>
-                    )}
-                    
-                    <div className="report-meta">
-                        <span className="report-date">
-                            <i className="far fa-clock"></i>
-                            {formatDate(report.timestamp)}
-                        </span>
-                    </div>
-                    
-                    {report.latitude && report.longitude && (
-                        <div className="map-link-container">
-                            <a 
-                                href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="map-link"
-                            >
-                                <i className="fas fa-map-marker-alt"></i>
-                                View on Map
-                            </a>
-                        </div>
-                    )}
-                    
-                    {report.status === 'pending' && (
-                        <div className="report-actions">
-                            <button 
-                                className="help-button"
-                                onClick={() => onHelpClick(report)}
-                            >
-                                <i className="fas fa-hands-helping"></i>
-                                Provide Help
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
-    if (loading) {
-        return (
-            <div className='ngo-homepage-container'>
-                <div className='ngo-homepage-content'>
-                    <div className='loading-spinner'>
-                        <div className='spinner'></div>
-                        <p>Loading Reports...</p>
-                    </div>
+            <div className='dashboard-container'>
+                <div className='dashboard-content'>
+                    <Loader type="fullscreen" text="Loading Reports..." />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className='ngo-homepage-container'>
-            <div className='ngo-homepage-content'>
-                {error && <div className="error-message main-error">{error}</div>}
-                <section className='reports-section'>
-                    <div className='reports-header'>
-                        <h2>Reports</h2>
-                        <div className='status-filter'>
+        <div className='dashboard-container'>
+            <div className='dashboard-content'>
+
+                {error && !showHelpDialog && ( // Show main errors only if dialog is closed
+                    <div className="error-message-text main-error">{error}</div>
+                )}
+
+                <section className='dashboard-section'>
+                    <div className='dashboard-section-header'>
+                        <h2 className='dashboard-section-title'>Available Reports</h2>
+                        {/* Add Search Input */}
+                        <div className="search-input-container">
+                            <input
+                                type="text"
+                                placeholder="Search reports..."
+                                className="form-input" // Use existing form input style
+                                onChange={handleSearchChange}
+                                aria-label="Search reports by description, reporter, or location"
+                            />
+                        </div>
+                        <div className='filter-button-group'>
                             {['all', 'pending', 'complete'].map(status => (
                                 <button
                                     key={status}
@@ -376,12 +392,22 @@ function NgoHomePage() {
                         </div>
                     </div>
 
-                    {filteredReports.length === 0 ? (
-                        <p className='no-reports'>No reports found for the selected filter.</p>
+                    {loading && reports.length > 0 && <Loader type="default" size="medium" text="Refreshing..." /> }
+
+                    {!loading && filteredReports.length === 0 ? (
+                         <div className='no-data-message'>
+                            <i className="fas fa-info-circle"></i>
+                            <p>No reports found matching your criteria.</p>
+                        </div>
                     ) : (
-                        <div className='reports-grid'>
+                        <div className='info-grid'>
                             {filteredReports.map(report => (
-                                <ReportCard key={report.id} report={report} onHelpClick={handleHelpClick} />
+                                <ReportCard
+                                    key={report.id}
+                                    report={report}
+                                    ngoLocation={ngoLocation}
+                                    onHelpClick={handleHelpClick}
+                                />
                             ))}
                         </div>
                     )}
@@ -389,56 +415,74 @@ function NgoHomePage() {
 
                 {/* Help Dialog */}
                 {showHelpDialog && (
-                    <div className='help-dialog'>
-                        <div className='help-dialog-content'>
-                            <h3>Provide Help Details</h3>
+                    <motion.div
+                        className='dialog-overlay' // Use overlay class
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }} // Add exit animation
+                    >
+                        <motion.div
+                            className='dialog-content-box' // Use content box class
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }} // Add exit animation
+                        >
+                             <div className="dialog-header">
+                                <h3 className="dialog-title">Provide Help Details</h3>
+                                <button
+                                    className="dialog-close-button"
+                                    onClick={() => setShowHelpDialog(false)}
+                                    aria-label="Close help dialog"
+                                    disabled={isSubmittingHelp}
+                                >
+                                    &times;
+                                </button>
+                             </div>
                             <p className='help-dialog-subtitle'>
-                                NGO: {currentNgo?.name}
+                                Helping as: {currentNgo?.name}
                             </p>
-                            <form className='help-form' onSubmit={(e) => {
-                                e.preventDefault();
-                                handleHelpSubmit();
-                            }}>
-                                {error && <div className="error-message dialog-error">{error}</div>}
-
-                                <div className='help-form-group'>
-                                    <label htmlFor="description">Description of Help to be Provided</label>
+                            <form className='help-dialog-form' onSubmit={handleHelpSubmit}>
+                                {error && showHelpDialog && ( // Show dialog-specific errors
+                                     <div className="error-message-text dialog-error">{error}</div>
+                                )}
+                                <div className='form-group'>
+                                    <label htmlFor="helpDescription" className="form-label">Description of Help</label>
                                     <textarea
-                                        id="description"
-                                        placeholder="Please describe how you will help with this situation..."
-                                        value={helpData.description}
-                                        onChange={(e) => setHelpData({ description: e.target.value })}
+                                        id="helpDescription"
+                                        placeholder="Describe how your NGO will address this report..."
+                                        value={helpDescription}
+                                        onChange={(e) => setHelpDescription(e.target.value)}
                                         required
-                                        className='help-textarea'
+                                        className='form-textarea' // Use generic class
                                         rows={5}
+                                        disabled={isSubmittingHelp}
                                     />
                                 </div>
 
-                                <div className='help-dialog-buttons'>
-                                    <button 
-                                        type="button" 
-                                        className='help-cancel-button' 
-                                        onClick={() => {
-                                            setShowHelpDialog(false);
-                                            setSelectedReport(null);
-                                            setHelpData({ description: '' });
-                                            setError(null);
-                                        }}
+                                <div className='dialog-actions'>
+                                    <button
+                                        type="button"
+                                        className='dialog-button-cancel button-secondary' // Use generic classes
+                                        onClick={() => setShowHelpDialog(false)}
                                         disabled={isSubmittingHelp}
                                     >
                                         Cancel
                                     </button>
-                                    <button 
-                                        type="submit" 
-                                        className='help-submit-button' 
+                                    <button
+                                        type="submit"
+                                        className='dialog-button-submit button-primary button-ripple' // Use generic classes
                                         disabled={isSubmittingHelp}
                                     >
-                                        {isSubmittingHelp ? 'Submitting...' : 'Submit Help Details'}
+                                        {isSubmittingHelp ? (
+                                             <Loader type="button" size="small" />
+                                        ) : (
+                                            'Submit Help'
+                                        )}
                                     </button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </div>
         </div>
@@ -446,3 +490,13 @@ function NgoHomePage() {
 }
 
 export default NgoHomePage;
+
+<div className="ngo-homepage-container">
+    <div className="ngo-homepage-content">
+        <div className="ngo-homepage-reports-section">
+            <div className="ngo-homepage-reports-grid">
+                {/* Your existing report cards */}
+            </div>
+        </div>
+    </div>
+</div>

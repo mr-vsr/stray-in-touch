@@ -23,7 +23,7 @@ const getCurrentLocationPromise = (options = {}) => {
     });
 };
 
-function HeroSection() {
+const Hero = () => {
     const [strayInfo, setStrayInfo] = useState({
         informant: '',
         contact: '',
@@ -37,6 +37,8 @@ function HeroSection() {
     const [uploadError, setUploadError] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [locationError, setLocationError] = useState(null);
 
     const data = (e) => {
         const { name, value } = e.target;
@@ -100,38 +102,44 @@ function HeroSection() {
         }
     };
 
+    // const getCurrentLocation = async () => {
+    //     try {
+    //         const position = await getCurrentLocationPromise({
+    //             enableHighAccuracy: true,
+    //             timeout: 8000,
+    //             maximumAge: 60000
+    //         });
+    //         return {
+    //             latitude: position.coords.latitude,
+    //             longitude: position.coords.longitude
+    //         };
+    //     } catch (error) {
+    //         throw new Error('Could not fetch location: ' + error.message);
+    //     }
+    // };
+
     const pushData = async (e) => {
         e.preventDefault();
         setUploadError(null);
-
-        if (!strayInfo.informant || !strayInfo.contact || !strayInfo.location || !strayInfo.description) {
-            setUploadError('Please fill all the required text fields.');
-            return;
-        }
-
-        if (!strayInfo.imageUrl) {
-            setUploadError('Please upload an image before submitting.');
-            return;
-        }
-
         setIsSubmitting(true);
 
-        let latitude = null;
-        let longitude = null;
-
         try {
+            // Validate form fields
+            if (!strayInfo.informant || !strayInfo.contact || !strayInfo.location || !strayInfo.description) {
+                throw new Error('Please fill all the required text fields.');
+            }
+
+            if (!strayInfo.imageUrl) {
+                throw new Error('Please upload an image before submitting.');
+            }
+
+            // Get location
+            let locationData = null;
             try {
-                const position = await getCurrentLocationPromise({
-                    enableHighAccuracy: true,
-                    timeout: 8000,
-                    maximumAge: 60000
-                });
-                latitude = position.coords.latitude;
-                longitude = position.coords.longitude;
-                console.log("Location fetched successfully:", latitude, longitude);
+                locationData = await getCurrentLocation();
             } catch (locationError) {
-                console.warn("Could not fetch location:", locationError.message);
-                setUploadError("Could not fetch location, submitting report without GPS coordinates.");
+                console.warn("Location error:", locationError);
+                // Continue without location if user denies permission
             }
 
             const dataToSend = {
@@ -140,13 +148,15 @@ function HeroSection() {
                 locationDescription: strayInfo.location,
                 description: strayInfo.description,
                 imageUrl: strayInfo.imageUrl,
-                latitude: latitude,
-                longitude: longitude,
+                ...(locationData && { 
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude 
+                }),
                 timestamp: new Date()
             };
 
             await addDoc(collection(db, 'strayInfo'), dataToSend);
-
+            
             setStrayInfo({
                 informant: '',
                 contact: '',
@@ -160,8 +170,8 @@ function HeroSection() {
             setUploadError(null);
 
         } catch (error) {
-            console.error('Error submitting report: ', error);
-            setUploadError('Failed to submit report. Please try again.');
+            console.error('Error:', error);
+            setUploadError(error.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -169,6 +179,53 @@ function HeroSection() {
 
     const handleCloseSuccessDialog = () => {
         setShowSuccessDialog(false);
+        // Reset form state
+        setStrayInfo({
+            informant: '',
+            contact: '',
+            location: '',
+            description: '',
+            imageUrl: ''
+        });
+    };
+
+    const handleImageLoad = () => {
+        setImageLoaded(true);
+    };
+
+    // Keep only this one getCurrentLocation function and remove the other one
+    const getCurrentLocation = async () => {
+        try {
+            const position = await getCurrentLocationPromise({
+                enableHighAccuracy: true,
+                timeout: 8000,
+                maximumAge: 60000
+            });
+            return {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+        } catch (error) {
+            throw new Error('Could not fetch location: ' + error.message);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        
+        try {
+            const location = await getCurrentLocation();
+            const formDataWithLocation = {
+                ...strayInfo,
+                location: location,
+                timestamp: new Date().toISOString()
+            };
+            await pushData(formDataWithLocation);
+        } catch (error) {
+            setLocationError('Please enable location access to submit the report');
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -186,7 +243,7 @@ function HeroSection() {
                         transition={{ delay: 0.2, duration: 0.75 }}
                         className="updated-heading"
                     >
-                        Report stray animals in need to help them find a better home
+                        Refining the world one pet at a time
                     </motion.h1>
                     <motion.div
                         initial={{ y: 50, opacity: 0 }}
@@ -194,10 +251,13 @@ function HeroSection() {
                         transition={{ delay: 0.4, duration: 0.75 }}
                         className="hero-section-image-container"
                     >
+                        {!imageLoaded && <div className="hero-section-loader" />}
                         <img
                             src={HeroImage}
                             alt="stray animal"
                             className="hero-section-image"
+                            style={{ opacity: imageLoaded ? 1 : 0 }}
+                            onLoad={handleImageLoad}
                         />
                     </motion.div>
                 </div>
@@ -212,12 +272,17 @@ function HeroSection() {
                     isSubmitting={isSubmitting}
                     uploadError={uploadError}
                 />
+                {locationError && (
+                    <div className="stray-report-error-message">
+                        {locationError}
+                    </div>
+                )}
             </div>
             {showSuccessDialog && (
                 <SuccessDialog onClose={handleCloseSuccessDialog} />
             )}
         </div>
-    )
-}
+    );
+};
 
-export default HeroSection
+export default Hero;

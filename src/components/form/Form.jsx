@@ -12,14 +12,14 @@ function Form({
 }) {
     return (
         <motion.form
-            className='hero-section-form'
+            className='stray-report-form'
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             onSubmit={pushData}
         >
             <motion.h2
-                className="updated-subheading"
+                className="stray-report-form-heading"
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -28,7 +28,7 @@ function Form({
             </motion.h2>
 
             <motion.div
-                className='form-group'
+                className='stray-report-form-group'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
             >
@@ -36,7 +36,7 @@ function Form({
                     type='text'
                     name="informant"
                     onChange={data}
-                    className='form-input updated-text'
+                    className='stray-report-form-input'
                     placeholder='Your Name'
                     value={strayInfo.informant}
                     required
@@ -44,7 +44,7 @@ function Form({
             </motion.div>
 
             <motion.div
-                className='form-group'
+                className='stray-report-form-group'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
             >
@@ -52,7 +52,7 @@ function Form({
                     type='tel'
                     name="contact"
                     onChange={data}
-                    className='form-input updated-text'
+                    className='stray-report-form-input'
                     placeholder='Phone Number'
                     value={strayInfo.contact}
                     required
@@ -60,14 +60,14 @@ function Form({
             </motion.div>
 
             <motion.div
-                className='form-group'
+                className='stray-report-form-group'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
             >
                 <input
                     type='text'
                     name="location"
-                    className='form-input updated-text'
+                    className='stray-report-form-input'
                     placeholder='Location Description (Give a landmark or street name as well)'
                     onChange={data}
                     value={strayInfo.location}
@@ -76,14 +76,14 @@ function Form({
             </motion.div>
 
             <motion.div
-                className='form-group'
+                className='stray-report-form-group'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
             >
                 <textarea
                     name="description"
                     onChange={data}
-                    className='form-input textarea updated-text'
+                    className='stray-report-form-textarea'
                     placeholder='Brief Description'
                     value={strayInfo.description}
                     required
@@ -92,7 +92,7 @@ function Form({
             </motion.div>
 
             <motion.div
-                className='form-group image-upload-group'
+                className='stray-report-form-group stray-report-image-upload'
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
             >
@@ -100,39 +100,39 @@ function Form({
                     type="file"
                     accept="image/*"
                     onChange={(e) => uploadImage(e.target.files)}
-                    className="image-upload-input"
+                    className="stray-report-image-input"
                     disabled={isUploading || isSubmitting}
                     aria-label="Upload an image of the stray animal"
                 />
                 {isUploading && (
-                    <div className="upload-loading">
+                    <div className="stray-report-upload-loading">
                         Uploading image... Please wait.
                     </div>
                 )}
                 {strayInfo.imageUrl && !isUploading && (
-                    <div className="image-preview">
+                    <div className="stray-report-image-preview">
                         <img src={strayInfo.imageUrl} alt="Preview of uploaded stray animal" />
                     </div>
                 )}
             </motion.div>
 
             {uploadError && (
-                <div className="upload-error error-message">
+                <div className="stray-report-error-message">
                     {uploadError}
                 </div>
             )}
 
             <motion.button
-                type='submit'
-                className='updated-button'
-                disabled={isUploading || isSubmitting}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="stray-report-submit-button"
+                disabled={isSubmitting || isUploading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
             >
-                {isSubmitting ? 'Submitting...' : 'Report'}
+                {isSubmitting ? 'Submitting...' : 'Submit Report'}
             </motion.button>
         </motion.form>
-    )
+    );
 }
 
-export default Form
+export default Form;

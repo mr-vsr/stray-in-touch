@@ -143,29 +143,30 @@ function UserHomePage() {
   // Add this render function before the return statement
   const renderHelpReports = () => {
     return (
-      <div className="reports-grid">
+      <div className="info-grid">
         {helpReports.map((report) => (
           <motion.div
             key={report.id}
-            className="report-card dark-theme"
+            className="info-card glass-card"
             whileHover={{ y: -5 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="report-header">
-              <h3>{report.ngo?.name || 'NGO'}</h3>
-              <span className="report-status">HELPED</span>
+            <div className="info-card-header">
+              <h3 className="info-card-title">{report.ngo?.name || 'NGO'}</h3>
+              <span className="info-card-status success">HELPED</span>
             </div>
-            <div className="report-content">
-              <p className="report-description">{report.descriptionOfHelp}</p>
-              <div className="ngo-response">
-                <h4>Actions Taken</h4>
+            <div className="info-card-content">
+              <p className="info-card-description">{report.descriptionOfHelp}</p>
+              <div className="info-card-detail-item">
+                <i className="fas fa-check-circle"></i>
                 <p>{report.actionsTaken || 'No action details available'}</p>
               </div>
-              <div className="report-meta">
-                <span>
+              <div className="info-card-meta">
+                <span className="info-card-location">
                   <i className="fas fa-map-marker-alt"></i>
                   {report.ngoAddress || 'Location not specified'}
                 </span>
-                <span>
+                <span className="info-card-date">
                   <i className="fas fa-calendar-alt"></i>
                   {formatDate(report.timestamp)}
                 </span>
@@ -220,85 +221,90 @@ function UserHomePage() {
   return (
     <div className="user-homepage-container">
       <div className="user-homepage-content">
-        {error && (
-          <div className="error-message">
-            <i className="fas fa-exclamation-circle"></i>
-            {error}
-          </div>
-        )}
+        <div className="user-homepage-reports-section">
+            <div className="user-homepage-reports-grid">
+                {/* Your existing report cards */}
+            </div>
+        </div>
+    </div>
+      {error && (
+        <div className="error-message">
+          <i className="fas fa-exclamation-circle"></i>
+          {error}
+        </div>
+      )}
 
-        {/* User's Reports Section */}
-        <section className="user-reports-section">
-          <h2>Your Reports</h2>
-          {loadingUserReports ? (
-            <Loader type="default" size="medium" text="Loading your reports..." />
-          ) : userReports.length > 0 ? (
-            <div className="reports-grid">
-              {userReports.map(report => (
-                <motion.div
-                  key={report.id}
-                  className="report-card user-report"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="report-header">
-                    <h3 className="report-title">Stray Report</h3>
-                    <span className={`report-status ${report.status || 'pending'}`}>
-                      {report.status || 'Pending'}
+      {/* User's Reports Section */}
+      <section className="user-reports-section">
+        <h2>Your Reports</h2>
+        {loadingUserReports ? (
+          <Loader type="default" size="medium" text="Loading your reports..." />
+        ) : userReports.length > 0 ? (
+          <div className="reports-grid">
+            {userReports.map(report => (
+              <motion.div
+                key={report.id}
+                className="report-card user-report"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="report-header">
+                  <h3 className="report-title">Stray Report</h3>
+                  <span className={`report-status ${report.status || 'pending'}`}>
+                    {report.status || 'Pending'}
+                  </span>
+                </div>
+                
+                {report.imageUrl && (
+                  <div className="report-image-container">
+                    <img src={report.imageUrl} alt="Reported stray" className="report-image" />
+                  </div>
+                )}
+
+                <div className="report-content">
+                  <p className="report-description">{report.description}</p>
+                  <div className="report-meta">
+                    <span className="report-location">
+                      <i className="fas fa-map-marker-alt"></i>
+                      {report.locationDescription}
+                    </span>
+                    <span className="report-date">
+                      <i className="fas fa-calendar-alt"></i>
+                      {formatDate(report.timestamp)}
                     </span>
                   </div>
-                  
-                  {report.imageUrl && (
-                    <div className="report-image-container">
-                      <img src={report.imageUrl} alt="Reported stray" className="report-image" />
-                    </div>
-                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="no-reports-message">
+            <i className="fas fa-info-circle"></i>
+            <p>You haven't submitted any reports yet.</p>
+          </div>
+        )}
+      </section>
 
-                  <div className="report-content">
-                    <p className="report-description">{report.description}</p>
-                    <div className="report-meta">
-                      <span className="report-location">
-                        <i className="fas fa-map-marker-alt"></i>
-                        {report.locationDescription}
-                      </span>
-                      <span className="report-date">
-                        <i className="fas fa-calendar-alt"></i>
-                        {formatDate(report.timestamp)}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="no-reports-message">
-              <i className="fas fa-info-circle"></i>
-              <p>You haven't submitted any reports yet.</p>
-            </div>
-          )}
-        </section>
+      {/* Help Reports Section */}
+      <section className="help-reports-section">
+        <h2>Help Provided</h2>
+        {loadingHelpReports ? (
+          <Loader type="default" size="medium" text="Loading help reports..." />
+        ) : (
+          renderHelpReports()
+        )}
+      </section>
 
-        {/* Help Reports Section */}
-        <section className="help-reports-section">
-          <h2>Help Provided</h2>
-          {loadingHelpReports ? (
-            <Loader type="default" size="medium" text="Loading help reports..." />
-          ) : (
-            renderHelpReports()
-          )}
-        </section>
-
-        {/* Donations Section */}
-        <section className="donations-section">
-          <h2>Your Donations</h2>
-          {loadingDonations ? (
-            <Loader type="default" size="medium" text="Loading donations..." />
-          ) : (
-            renderDonations()
-          )}
-        </section>
-      </div>
+      {/* Donations Section */}
+      <section className="donations-section">
+        <h2>Your Donations</h2>
+        {loadingDonations ? (
+          <Loader type="default" size="medium" text="Loading donations..." />
+        ) : (
+          renderDonations()
+        )}
+      </section>
     </div>
   );
 }

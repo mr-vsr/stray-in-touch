@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Donations as DonationsImage } from "../../assets";
 import { motion } from 'framer-motion';
 
-function Donations() {
+function DonationsCta() {
     return (
         <section className="donations-cta-container">
             <motion.div
@@ -14,7 +14,7 @@ function Donations() {
             >
                 <img
                     src={DonationsImage}
-                    alt="Donations Background"
+                    alt="Happy dogs waiting to be helped"
                 />
             </motion.div>
 
@@ -25,6 +25,8 @@ function Donations() {
                 viewport={{ once: true }}
                 className="donations-cta-text-content"
             >
+                <h2 className="donations-cta-heading">Donate & Save</h2>
+                <p className="donations-cta-subheading">Join the community of animal lovers!</p>
                 <motion.h2
                     initial={{ y: -20, opacity: 0 }}
                     whileInView={{ y: 0, opacity: 1 }}
@@ -67,4 +69,4 @@ function Donations() {
     );
 }
 
-export default Donations;
+export default DonationsCta;

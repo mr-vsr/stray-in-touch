@@ -11,28 +11,48 @@ function Whatwedo() {
     ];
 
     return (
-        <section className="what-we-do-container">
-            <div className="what-we-do-inner">
+        <section className="what-we-do-section" id="services">
+            <div className="what-we-do-container">
                 <motion.div
-                    className="what-we-do-header"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    className="what-we-do-content"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
                     transition={{ duration: 0.8 }}
                     viewport={{ once: true }}
                 >
-                    <h2>What We Do</h2>
-                    <p>We have partnered with NGOs across various localities to provide comprehensive care for stray animals</p>
-                </motion.div>
+                    <div className="what-we-do-text">
+                        <motion.h3
+                            className="section-title"
+                            initial={{ y: 20, opacity: 0 }}
+                            whileInView={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                            viewport={{ once: true }}
+                        >
+                            Our Services
+                        </motion.h3>
+                        
+                        <motion.h2
+                            className="what-we-do-heading"
+                            initial={{ y: 20, opacity: 0 }}
+                            whileInView={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.3 }}
+                            viewport={{ once: true }}
+                        >
+                            What We Do
+                        </motion.h2>
 
-                <div className="what-we-do-content">
-                    {/* Left Column - Service Cards */}
-                    <motion.div
-                        className="what-we-do-cards"
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8 }}
-                        viewport={{ once: true }}
-                    >
+                        <motion.p
+                            className="what-we-do-description"
+                            initial={{ y: 20, opacity: 0 }}
+                            whileInView={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            viewport={{ once: true }}
+                        >
+                            We have partnered with NGOs across various localities to provide comprehensive care for stray animals
+                        </motion.p>
+                    </div>
+
+                    <div className="services-grid">
                         {services.map((service, index) => (
                             <motion.div
                                 key={service.title}
@@ -43,35 +63,25 @@ function Whatwedo() {
                                 viewport={{ once: true }}
                             >
                                 <div className="service-icon">
-                                    <img
-                                        src={service.icon}
-                                        alt={service.title}
-                                        className="icon"
-                                    />
+                                    <img src={service.icon} alt={service.title} />
                                 </div>
-                                <div className="service-content">
-                                    <h3>{service.title}</h3>
-                                    <p>{service.description}</p>
-                                </div>
+                                <h3>{service.title}</h3>
+                                <p>{service.description}</p>
                             </motion.div>
                         ))}
-                    </motion.div>
+                    </div>
 
-                    {/* Right Column - Image */}
                     <motion.div
-                        className="what-we-do-image"
+                        className="what-we-do-image-wrapper"
                         initial={{ opacity: 0, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
                         viewport={{ once: true }}
                     >
-                        <img
-                            src={WhatWeDo}
-                            alt="What We Do"
-                            className="main-image"
-                        />
+                        <img src={WhatWeDo} alt="Our services illustration" className="what-we-do-image" />
+                        <div className="image-background-element"></div>
                     </motion.div>
-                </div>
+                </motion.div>
             </div>
         </section>
     );

@@ -7,14 +7,16 @@ const Layout = ({ children, showHeader = true, showFooter = true }) => {
   const { isLoggedIn } = useSelector((state) => state.auth);
 
   return (
-    <div className="app">
+    <div className="layout">
       {showHeader && <Header />}
-      <main className="main-content">
-        {children}
+      <main className="main-content section-padding">
+        <div className="container-max-width">
+          {children}
+        </div>
       </main>
       {showFooter && <Footer />}
     </div>
   );
 };
 
-export default Layout; 
+export default Layout;

@@ -22,18 +22,15 @@ function Cards({ data }) {
             {data.map((src, index) => (
                 <motion.div
                     key={src.id}
-                    className="card"
+                    className="stray-report-card"
                     style={{
                         backgroundImage: `url(${cardsOne})`
                     }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                    <div className='overlay'>
-                        <p className='ngo-page-card-text'>{src.description}</p>
-                        <p className='ngo-page-card-location'>{src.location}</p>
-                        <div className='card-actions'>
+                    <div className="stray-report-card-overlay">
+                        <p className="stray-report-card-description">{src.description}</p>
+                        <p className="stray-report-card-location">{src.location}</p>
+                        <div className="stray-report-card-actions">
                             <button
                                 className='ngo-page-card-help-button'
                                 onClick={() => openDialog(src)}

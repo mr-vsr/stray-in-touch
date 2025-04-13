@@ -1,67 +1,119 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { HeroImage } from '../../assets';
 import { motion } from 'framer-motion';
+import { Loader } from '../../components';
 
 function LoginType() {
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setIsLoading(false), 1500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (isLoading) {
+        return <Loader type="fullscreen" text="Loading..." />;
+    }
+
+    const buttonVariants = {
+        hover: {
+            scale: 1.02,
+            boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.1)",
+        },
+        tap: {
+            scale: 0.98,
+        },
+        initial: {
+            scale: 1,
+            opacity: 0,
+            y: 20,
+        },
+        animate: {
+            scale: 1,
+            opacity: 1,
+            y: 0,
+        }
+    };
+
     return (
-        <div className='updated-page-container'>
-            <motion.div
-                className='type-of-login-container'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
+        <div className="login-type-container">
+            <motion.div className="login-type-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
             >
-                <motion.div
-                    className='type-of-login-container-top'
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
+                <motion.div 
+                    className="login-type-image"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                 >
-                    <img src={HeroImage} alt="Hero" className='type-of-login-image' />
+                    <img src={HeroImage} alt="Welcome" />
                 </motion.div>
-                <motion.div
-                    className='type-of-login-container-bottom updated-section'
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
+
+                <motion.div 
+                    className="login-type-content"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
                 >
-                    <motion.h1
-                        className='type-of-login-bottom-heading updated-heading'
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                    >
-                        Make a difference by joining us in this journey
-                    </motion.h1>
-                    <motion.h2
-                        className='type-of-login-type-text updated-subheading'
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                    >
-                        Login Type
-                    </motion.h2>
-                    <motion.div
-                        className='type-of-login-buttons-container'
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.7 }}
-                    >
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Link to="/user-login" className="type-of-login-button updated-button">User</Link>
+                    <h1>Welcome to StrayInTouch</h1>
+                    <p>Choose your login type to continue</p>
+
+                    <div className="login-type-buttons">
+                        <motion.div
+                            variants={buttonVariants}
+                            initial="initial"
+                            animate="animate"
+                            whileHover="hover"
+                            whileTap="tap"
+                            transition={{ 
+                                duration: 0.3,
+                                delay: 0.5 
+                            }}
+                        >
+                            <Link to="/user-login" className="login-button user">
+                                User Login
+                            </Link>
                         </motion.div>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Link to="/ngo-login" className="type-of-login-button updated-button">NGO</Link>
+
+                        <motion.div
+                            variants={buttonVariants}
+                            initial="initial"
+                            animate="animate"
+                            whileHover="hover"
+                            whileTap="tap"
+                            transition={{ 
+                                duration: 0.3,
+                                delay: 0.6 
+                            }}
+                        >
+                            <Link to="/ngo-login" className="login-button ngo">
+                                NGO Login
+                            </Link>
                         </motion.div>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Link to="/admin-login" className="type-of-login-button updated-button">Admin</Link>
+
+                        <motion.div
+                            variants={buttonVariants}
+                            initial="initial"
+                            animate="animate"
+                            whileHover="hover"
+                            whileTap="tap"
+                            transition={{ 
+                                duration: 0.3,
+                                delay: 0.7 
+                            }}
+                        >
+                            <Link to="/admin-login" className="login-button admin">
+                                Admin Login
+                            </Link>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 </motion.div>
             </motion.div>
         </div>
-    )
+    );
 }
 
-export default LoginType
+export default LoginType;
