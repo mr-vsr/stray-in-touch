@@ -1,170 +1,173 @@
-import React, { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import React, { useState } from 'react';
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
-import { styledLink } from '../../assets';
 import { useDispatch } from 'react-redux';
-import { Login as LogIn, Logout } from "../../store/authSlice";
+import { Login } from "../../store/authSlice";
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 function AdminLogin() {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
-
+    const dispatch = useDispatch();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [touched, setTouched] = useState({ email: false, password: false });
 
-    const handleSubmit = (e) => {
+    const validateForm = () => {
+        const errors = {};
+        if (!email) errors.email = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(email)) errors.email = 'Invalid email format';
+        if (!password) errors.password = 'Password is required';
+        return errors;
+    };
+
+    const handleBlur = (field) => {
+        setTouched({ ...touched, [field]: true });
+    };
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-    }
+        const formErrors = validateForm();
 
-    const login = async () => {
-        if (!email || !password) {
-            setError({ code: 'auth/missing-credentials' });
+        if (Object.keys(formErrors).length > 0) {
+            setError({ 
+                code: 'validation-error',
+                message: Object.values(formErrors).join('. ')
+            });
             return;
         }
 
-        if (password.length < 6) {
-            setError({ code: 'auth/weak-password' });
-            return;
-        }
+        setIsLoading(true);
 
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // Check if user exists in admins collection
-            const adminsRef = collection(db, 'admins');
-            const q = query(adminsRef, where('uid', '==', user.uid));
+            // Verify if the user is an admin
+            const adminRef = collection(db, 'AdminInfo');
+            const q = query(adminRef, where('uid', '==', user.uid));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                setError({ code: 'auth/wrong-login-type', message: 'This login is only for administrators.' });
+                setError({ 
+                    code: 'auth/unauthorized', 
+                    message: 'This login is only for administrators. Please use the correct login type.' 
+                });
                 await auth.signOut();
                 return;
             }
 
-            dispatch(LogIn({
+            dispatch(Login({
                 userData: user,
                 isLoggedIn: true
             }));
-            navigate('/admin-dashboard');
+
+            navigate("/admin-dashboard");
         } catch (error) {
-            setError(error);
-        }
-    }
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Check if user exists in admins collection
-                const adminsRef = collection(db, 'admins');
-                const q = query(adminsRef, where('uid', '==', user.uid));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    await auth.signOut();
-                    dispatch(Logout());
-                    return;
-                }
-
-                dispatch(LogIn({
-                    userData: user,
-                    isLoggedIn: true
-                }));
-                navigate('/admin-dashboard');
-            } else {
-                dispatch(Logout());
+            let errorMessage;
+            switch (error?.code) {
+                case 'auth/wrong-password':
+                    errorMessage = 'Incorrect password. Please check your password and try again.';
+                    break;
+                case 'auth/user-not-found':
+                    errorMessage = 'This email is not registered. Please sign up first.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Invalid email format. Please enter a valid email address.';
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = 'This account has been disabled. Please contact support.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Network error. Please check your internet connection.';
+                    break;
+                case 'auth/unauthorized':
+                    errorMessage = error.message;
+                    break;
+                default:
+                    errorMessage = 'An error occurred during login. Please try again.';
             }
-        });
-
-        return () => unsubscribe();
-    }, [dispatch, navigate]);
+            setError({ 
+                code: error?.code || 'auth/unknown',
+                message: errorMessage 
+            });
+            console.error('Login error:', error); // For debugging purposes
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <div className="updated-page-container">
-            <motion.div
-                className='container'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+        <div className="auth-container">
+            <motion.div 
+                className="auth-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <motion.div
-                    className='login-container'
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                >
-                    <motion.h2
-                        className='login-heading updated-heading'
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.3 }}
+                <div className="auth-header">
+                    <h1 className="auth-title">Admin Login</h1>
+                    <p className="auth-subtitle">Access your admin dashboard</p>
+                </div>
+
+                <form className="auth-form" onSubmit={handleLogin}>
+                    <div className="form-group">
+                        <label className="form-label">Email Address</label>
+                        <input
+                            type="email"
+                            className={`form-input ${touched.email && !email ? 'error' : ''}`}
+                            onBlur={() => handleBlur('email')}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter your email"
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Password</label>
+                        <input
+                            type="password"
+                            className={`form-input ${touched.password && !password ? 'error' : ''}`}
+                            onBlur={() => handleBlur('password')}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            required
+                        />
+                    </div>
+
+                    <motion.button
+                        type="submit"
+                        className="auth-button"
+                        disabled={isLoading}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                     >
-                        Admin Login
-                    </motion.h2>
-                    <motion.form
-                        onSubmit={handleSubmit}
-                        className='login-form-container'
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                        >
-                            <input
-                                type='email'
-                                className='email updated-text'
-                                placeholder='E-mail'
-                                onChange={(event) => setEmail(event.target.value)}
-                                value={email}
-                                required
-                            />
-                        </motion.div>
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.6 }}
-                        >
-                            <input
-                                type='password'
-                                className='password updated-text'
-                                placeholder='Password'
-                                onChange={(event) => setPassword(event.target.value)}
-                                value={password}
-                                required
-                            />
-                        </motion.div>
-                        <motion.button
-                            type='submit'
-                            className='login-button updated-button'
-                            onClick={login}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            Continue
-                        </motion.button>
-                    </motion.form>
-                    <motion.p
-                        className='signup-text'
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.7 }}
-                    >
-                        Don't have an account?
-                        <Link to="/admin-signup" style={{ ...styledLink, color: '#0062ff' }}>Signup</Link>
-                    </motion.p>
-                </motion.div>
-                {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </motion.button>
+                </form>
+
+                <div className="auth-links">
+                    <p>
+                        Need an admin account?{' '}
+                        <Link to="/admin-signup" className="auth-link">
+                            Register Here
+                        </Link>
+                    </p>
+                </div>
             </motion.div>
+            
+            {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </div>
-    )
+    );
 }
 
-export default AdminLogin 
+export default AdminLogin;

@@ -12,165 +12,144 @@ import { Login } from "../../store/authSlice";
 function NgoLogin() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-    const [loginInfo, setLoginInfo] = useState({
-        email: "",
-        password: ""
-    });
-
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [touched, setTouched] = useState({ email: false, password: false });
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setLoginInfo(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    const validateForm = () => {
+        const errors = {};
+        if (!email) errors.email = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(email)) errors.email = 'Invalid email format';
+        if (!password) errors.password = 'Password is required';
+        return errors;
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleBlur = (field) => {
+        setTouched({ ...touched, [field]: true });
     };
 
-    const login = async (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        const formErrors = validateForm();
 
-        if (!loginInfo.email || !loginInfo.password) {
-            setError({ code: 'auth/missing-credentials', message: 'Please fill all required fields' });
+        if (Object.keys(formErrors).length > 0) {
+            setError({ 
+                code: 'validation-error',
+                message: Object.values(formErrors).join('. ')
+            });
             return;
         }
 
-        setIsSubmitting(true);
+        setIsLoading(true);
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, loginInfo.email, loginInfo.password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             // Check if user exists in the NgoInfo collection
-            const q = query(
-                collection(db, "NgoInfo"),
-                where("uid", "==", user.uid)
-            );
-            
+            const ngoRef = collection(db, 'NgoInfo');
+            const q = query(ngoRef, where('uid', '==', user.uid));
             const querySnapshot = await getDocs(q);
+
             if (querySnapshot.empty) {
-                // User exists in auth but not in NgoInfo collection
-                await auth.signOut();
                 setError({ 
-                    code: 'auth/not-authorized', 
-                    message: 'You are not authorized as an NGO. Please sign up as an NGO first.' 
+                    code: 'auth/wrong-login-type', 
+                    message: 'This login is only for NGOs. Please use the correct login type.' 
                 });
+                await auth.signOut();
                 return;
             }
 
-            // Get the NGO data
-            const ngoData = querySnapshot.docs[0].data();
-            
-            // Login the user with NGO role
             dispatch(Login({
-                userData: {
-                    ...user,
-                    role: "ngo",
-                    ngoData: ngoData
-                },
+                userData: user,
                 isLoggedIn: true
             }));
-
-            // Navigate to NGO homepage
-            navigate("/ngo-homepage");
+            navigate('/ngo-homepage');
         } catch (error) {
-            console.error("Error during login:", error);
-            setError(error);
+            let errorMessage;
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = 'No account found with this email.';
+                    break;
+                case 'auth/wrong-password':
+                    errorMessage = 'Invalid password.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Invalid email format.';
+                    break;
+                default:
+                    errorMessage = 'An error occurred during login.';
+            }
+            setError({ code: error.code, message: errorMessage });
         } finally {
-            setIsSubmitting(false);
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="updated-page-container">
-            <motion.div
-                className='container'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+        <div className="auth-container">
+            <motion.div 
+                className="auth-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <motion.div
-                    className='login-container'
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                >
-                    <motion.h2
-                        className='login-heading updated-heading'
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.3 }}
-                    >
-                        NGO Login
-                    </motion.h2>
-                    <motion.form
-                        onSubmit={handleSubmit}
-                        className='login-form-container'
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                        >
-                            <input
-                                type='email'
-                                name="email"
-                                className='email'
-                                placeholder='Email Address *'
-                                onChange={handleChange}
-                                value={loginInfo.email}
-                                required
-                            />
-                        </motion.div>
+                <div className="auth-header">
+                    <h1 className="auth-title">NGO Login</h1>
+                    <p className="auth-subtitle">Welcome back to your NGO dashboard</p>
+                </div>
 
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.6 }}
-                        >
-                            <input
-                                type='password'
-                                name="password"
-                                className='password'
-                                placeholder='Password *'
-                                onChange={handleChange}
-                                value={loginInfo.password}
-                                required
-                            />
-                        </motion.div>
+                <form className="auth-form" onSubmit={handleLogin}>
+                    <div className="form-group">
+                        <label className="form-label">Email Address</label>
+                        <input
+                            type="email"
+                            className={`form-input ${touched.email && !email ? 'error' : ''}`}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onBlur={() => handleBlur('email')}
+                            placeholder="Enter your email"
+                            required
+                        />
+                    </div>
 
-                        <motion.button
-                            type='submit'
-                            className='login-button updated-button'
-                            onClick={login}
-                            disabled={isSubmitting}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {isSubmitting ? 'Logging in...' : 'Login'}
-                        </motion.button>
-                    </motion.form>
-                    <motion.p
-                        className='signup-text'
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.7 }}
+                    <div className="form-group">
+                        <label className="form-label">Password</label>
+                        <input
+                            type="password"
+                            className={`form-input ${touched.password && !password ? 'error' : ''}`}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onBlur={() => handleBlur('password')}
+                            placeholder="Enter your password"
+                            required
+                        />
+                    </div>
+
+                    <motion.button
+                        type="submit"
+                        className="auth-button"
+                        disabled={isLoading}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                     >
-                        Don't have an account?
-                        <Link to="/ngo-signup" style={{ ...styledLink, color: '#0062ff' }}>Sign up</Link>
-                    </motion.p>
-                </motion.div>
-                {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </motion.button>
+                </form>
+
+                <div className="auth-links">
+                    <p>
+                        Don't have an NGO account?{' '}
+                        <Link to="/ngo-signup" className="auth-link">
+                            Register Now
+                        </Link>
+                    </p>
+                </div>
             </motion.div>
+            
+            {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </div>
     );
 }
