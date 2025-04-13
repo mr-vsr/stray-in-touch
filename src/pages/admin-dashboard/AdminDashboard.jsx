@@ -301,11 +301,11 @@ const AdminDashboard = () => {
                         </button>
                     </div>
 
-                    <div className="stat-card">
-                        <div className="stat-icon">
+                    <div className="admin-dashboard-stat-card">
+                        <div className="admin-dashboard-stat-icon">
                             <FaHandsHelping />
                         </div>
-                        <div className="stat-info">
+                        <div className="admin-dashboard-stat-info">
                             <h3>Help Provided</h3>
                             <p>{stats.totalHelpProvided}</p>
                         </div>
@@ -318,11 +318,11 @@ const AdminDashboard = () => {
                         </button>
                     </div>
 
-                    <div className="stat-card">
-                        <div className="stat-icon">
+                    <div className="admin-dashboard-stat-card">
+                        <div className="admin-dashboard-stat-icon">
                             <FaBuilding />
                         </div>
-                        <div className="stat-info">
+                        <div className="admin-dashboard-stat-info">
                             <h3>NGOs Registered</h3>
                             <p>{stats.totalNgos}</p>
                         </div>
@@ -335,11 +335,11 @@ const AdminDashboard = () => {
                         </button>
                     </div>
 
-                    <div className="stat-card">
-                        <div className="stat-icon">
+                    <div className="admin-dashboard-stat-card">
+                        <div className="admin-dashboard-stat-icon">
                             <FaUsers />
                         </div>
-                        <div className="stat-info">
+                        <div className="admin-dashboard-stat-info">
                             <h3>Total Users</h3>
                             <p>{stats.totalUsers}</p>
                         </div>
@@ -352,11 +352,11 @@ const AdminDashboard = () => {
                         </button>
                     </div>
 
-                    <div className="stat-card">
-                        <div className="stat-icon">
+                    <div className="admin-dashboard-stat-card">
+                        <div className="admin-dashboard-stat-icon">
                             <FaEnvelope />
                         </div>
-                        <div className="stat-info">
+                        <div className="admin-dashboard-stat-info">
                             <h3>Subscribers</h3>
                             <p>{stats.totalSubscribers}</p>
                         </div>
@@ -368,11 +368,11 @@ const AdminDashboard = () => {
                             Show More
                         </button>
                     </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">
+                    <div className="admin-dashboard-stat-card">
+                        <div className="admin-dashboard-stat-icon">
                             <FaDollarSign />
                         </div>
-                        <div className="stat-info">
+                        <div className="admin-dashboard-stat-info">
                             <h3>Total Donations</h3>
                             <p>Count: {stats.totalDonations}</p>
                             <p className="amount-text">Total: ₹{stats.totalDonationAmount.toLocaleString()}</p>
