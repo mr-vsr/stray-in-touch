@@ -6,6 +6,9 @@ import { db } from '../../auth/firebase-config';
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { UserLogin } from '../../components';
 
+// Add lazy loading for the payment dialog
+const PaymentDialog = React.lazy(() => import('../../components/PaymentDialog'));
+
 function Donations() {
     const navigate = useNavigate();
     const user = useSelector((state) => state.auth.userData);
@@ -77,7 +80,7 @@ function Donations() {
                 </motion.h1>
 
                 <motion.form className="donations-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
+                    <motion.div className="form-group">
                         <label>Name</label>
                         <input
                             type="text"
@@ -88,9 +91,9 @@ function Donations() {
                             disabled={isLoggedIn}
                             placeholder="Enter your name"
                         />
-                    </div>
+                    </motion.div>
 
-                    <div className="form-group">
+                    <motion.div className="form-group">
                         <label>Email</label>
                         <input
                             type="email"
@@ -101,7 +104,7 @@ function Donations() {
                             disabled={isLoggedIn}
                             placeholder="Enter your email"
                         />
-                    </div>
+                    </motion.div>
 
                     <div className="form-group">
                         <label>Phone</label>
@@ -175,7 +178,12 @@ function Donations() {
             </div>
 
             {showPaymentDialog && (
-                <div className="payment-dialog">
+                <motion.div 
+                    className="payment-dialog"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                >
                     <div className="payment-dialog-content">
                         <h2>Payment Status</h2>
                         {paymentStatus === 'success' ? (
@@ -208,7 +216,7 @@ function Donations() {
                             {paymentStatus === 'success' ? 'Return Home' : 'Close'}
                         </button>
                     </div>
-                </div>
+                </motion.div>
             )}
         </motion.div>
     );

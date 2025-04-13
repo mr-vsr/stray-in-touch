@@ -1222,7 +1222,22 @@ body{
   gap: 2rem;
 }
 
-.report-card,
+/* Report Card Styles */
+.report-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+  }
+
 .report-card.dark-theme {
     background: var(--background-dark);
     border-radius: var(--border-radius);
@@ -1235,7 +1250,6 @@ body{
     box-shadow: var(--shadow);
 }
 
-.report-card:hover,
 .report-card.dark-theme:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-hover);
@@ -4988,29 +5002,37 @@ body{
 }
 
 /* Section Styles */
+/* Section Styles */
 .user-reports-section,
-.help-reports-section {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--border-radius);
+.help-reports-section,
+.donations-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
     padding: 2rem;
     margin-bottom: 2rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
 
 .user-reports-section h2,
-.help-reports-section h2 {
-    color: var(--text-primary);
+.help-reports-section h2,
+.donations-section h2 {
+    color: #ffffff;
     font-size: 1.8rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
     position: relative;
     padding-left: 1rem;
+    background: linear-gradient(135deg, #0062ff, #da61ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .user-reports-section h2::before,
-.help-reports-section h2::before {
+.help-reports-section h2::before,
+.donations-section h2::before {
     content: '';
     position: absolute;
     left: 0;
@@ -5018,50 +5040,126 @@ body{
     transform: translateY(-50%);
     width: 4px;
     height: 24px;
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #0062ff, #da61ff);
     border-radius: 2px;
 }
 
-/* User Report Card Specific Styles */
-.report-card.user-report {
-    border-left: 4px solid var(--accent-color);
+/* Report Card Styles */
+.report-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
 }
 
-.report-card.help-report {
-    border-left: 4px solid #00c853;
-}
-
-/* Report Card Hover Effects */
-.report-card.user-report:hover,
-.report-card.help-report:hover {
+.report-card:hover {
     transform: translateY(-5px);
-    box-shadow: var(--shadow-hover);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.15);
 }
 
-/* Report Card Content Spacing */
 .report-card .report-content {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-/* Report Meta Information */
-.report-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
+.report-card .report-description {
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 1rem 0;
 }
 
-.report-meta span {
+/* Donations Section Styles */
+.donation-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.donation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.donation-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
-.report-meta i {
-    color: var(--accent-color);
+.donation-amount {
+    font-size: 1.8rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #0062ff, #da61ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.donation-meta {
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.donation-status,
+.report-status {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.donation-status.success,
+.report-status.complete {
+    background: rgba(0, 200, 83, 0.2);
+    color: #00c853;
+}
+
+.donation-status.pending,
+.report-status.pending {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.donation-status.failed {
+    background: rgba(255, 87, 34, 0.2);
+    color: #ff5722;
+}
+
+/* Grid Layout */
+.reports-grid,
+.donations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .user-reports-section,
+    .help-reports-section,
+    .donations-section {
+        padding: 1.5rem;
+    }
+
+    .reports-grid,
+    .donations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .donation-amount {
+        font-size: 1.5rem;
+    }
 }
 
 /* NGO Response Section */
@@ -5783,3 +5881,33 @@ body{
       max-width: 400px;
     }
   }
+
+  /* Report Status */
+.report-status {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.2), rgba(96, 165, 250, 0.2));
+    color: #00c853;
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    backdrop-filter: blur(5px);
+    transition: var(--transition);
+}
+
+.report-status.pending {
+    background: linear-gradient(135deg, rgba(255, 87, 87, 0.2), rgba(255, 170, 0, 0.2));
+    color: #ff5757;
+    border-color: rgba(255, 87, 87, 0.3);
+}
+
+.report-status.complete, 
+.report-status.success {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.2), rgba(96, 165, 250, 0.2));
+    color: #00c853;
+    border-color: rgba(0, 200, 83, 0.3);
+}

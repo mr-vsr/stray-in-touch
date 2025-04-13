@@ -1,6 +1,6 @@
 // src/components/header/Header.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { logoLinkStyle} from "../../assets/index";
 import { signOut } from '@firebase/auth';
 import { useSelector, useDispatch } from 'react-redux';
@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { FaBars, FaTimes } from 'react-icons/fa';
 
 function Header() {
+  const navigate = useNavigate(); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState('');
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
@@ -27,6 +28,7 @@ function Header() {
       await signOut(auth);
       dispatch(Logout());
       setIsMenuOpen(false);
+      navigate('/');
     } catch (error) {
       console.log("Error in signing out : ", error);
     }

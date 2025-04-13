@@ -1,11 +1,8 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 function AccessDenied() {
-    const location = useLocation();
-    const from = location.state?.from?.pathname || '/';
-
     return (
         <div className="updated-page-container">
             <motion.div
@@ -42,9 +39,6 @@ function AccessDenied() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.5 }}
                     >
-                        <Link to={from} className="back-button">
-                            Go Back
-                        </Link>
                         <Link to="/" className="home-button">
                             Return to Home
                         </Link>
@@ -55,4 +49,4 @@ function AccessDenied() {
     );
 }
 
-export default AccessDenied; 
+export default AccessDenied;

@@ -21,6 +21,7 @@ import Loader from './loader/Loader';
 import ProtectedRoute from './common/ProtectedRoute';
 import AccessDenied from './common/AccessDenied';
 import ImageUpload from './common/ImageUpload';
+import DonationHistory from './donations/DonationHistory';
 
 export {
     Cards,
@@ -43,5 +44,6 @@ export {
     Loader,
     ProtectedRoute,
     AccessDenied,
-    ImageUpload
+    ImageUpload,
+    DonationHistory,
 };

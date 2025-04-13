@@ -61,11 +61,10 @@ function ProtectedRoute({ children, allowedRole }) {
     }
 
     if (!userRole) {
-        // Redirect to access denied page if user doesn't have the required role
-        return <Navigate to="/access-denied" state={{ from: location }} replace />;
+        return <Navigate to="/" replace />;
     }
 
     return children;
 }
 
-export default ProtectedRoute; 
+export default ProtectedRoute;
