@@ -18,7 +18,6 @@ const DonationHistory = ({ donations, loading }) => {
 
     return (
         <section className="donations-history-section">
-            <h2>Your Donations</h2>
             {donations.length > 0 ? (
                 <div className="donations-grid">
                     {donations.map(donation => (
