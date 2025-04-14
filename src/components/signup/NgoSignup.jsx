@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
-import { styledLink } from '../../assets';
 import { collection, addDoc } from "firebase/firestore";
 import { useDispatch } from 'react-redux';
 import { Login } from "../../store/authSlice";
@@ -63,19 +62,20 @@ function NgoSignup() {
 
     const signup = async (e) => {
         e.preventDefault();
-        
+        setError(null);
+
         if (!ngoInfo.banner) {
-            setError({ 
-                code: 'validation/no-banner', 
-                message: 'Please upload an NGO banner image' 
+            setError({
+                code: 'validation/no-banner',
+                message: 'Please upload an NGO banner image'
             });
             return;
         }
 
         if (passwordError) {
-            setError({ 
-                code: 'validation/password', 
-                message: passwordError 
+            setError({
+                code: 'validation/password',
+                message: passwordError
             });
             return;
         }
@@ -93,7 +93,7 @@ function NgoSignup() {
 
             await addDoc(collection(db, "NgoInfo"), {
                 uid: user.uid,
-                role: ngoInfo.role, // Include role in Firestore document
+                role: ngoInfo.role,
                 name: ngoInfo.name,
                 contact: ngoInfo.contact,
                 email: ngoInfo.email.toLowerCase(),
@@ -102,12 +102,20 @@ function NgoSignup() {
                 createdAt: new Date()
             });
 
+            // Update the Login dispatch to include role
             dispatch(Login({
-                userData: user,
+                userData: {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: ngoInfo.name,
+                    photoURL: ngoInfo.banner,
+                    role: ngoInfo.role,
+                    contact: ngoInfo.contact
+                },
                 isLoggedIn: true
             }));
 
-            navigate("/ngo-homepage");
+            navigate("/ngo-homepage"); // Updated navigation path
         } catch (error) {
             let errorMessage;
             switch (error.code) {
@@ -129,9 +137,12 @@ function NgoSignup() {
         }
     };
 
+     const isFormValid = ngoInfo.name && ngoInfo.contact && ngoInfo.email && ngoInfo.address && ngoInfo.banner && ngoInfo.password && !passwordError;
+
+
     return (
         <div className="auth-container">
-            <motion.div 
+            <motion.div
                 className="auth-card"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -217,7 +228,7 @@ function NgoSignup() {
                             required
                         />
                         {passwordError && (
-                            <motion.div 
+                            <motion.div
                                 className="error-message"
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -231,9 +242,9 @@ function NgoSignup() {
                     <motion.button
                         type="submit"
                         className="auth-button"
-                        disabled={isSubmitting || !ngoInfo.banner || passwordError}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        disabled={isSubmitting || !isFormValid}
+                        whileHover={{ scale: isFormValid ? 1.02 : 1 }}
+                        whileTap={{ scale: isFormValid ? 0.98 : 1 }}
                     >
                         {isSubmitting ? 'Creating Account...' : 'Register NGO'}
                     </motion.button>
@@ -248,7 +259,7 @@ function NgoSignup() {
                     </p>
                 </div>
             </motion.div>
-            
+
             {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </div>
     );

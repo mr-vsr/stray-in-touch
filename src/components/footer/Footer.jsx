@@ -80,7 +80,7 @@ function Footer() {
                         <div className="footer-links-column">
                             <h4>Quick Links</h4>
                             <Link to="/about">About Us</Link>
-                            <Link to="/donate">Donate</Link>
+                            <Link to="/donations">Donate</Link>
                         </div>
 
                         <div className="footer-links-column">

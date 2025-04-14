@@ -4,10 +4,10 @@ import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
 import { collection, addDoc } from "firebase/firestore";
 import { useDispatch } from 'react-redux';
-import { Login } from "../../store/authSlice"; // Assuming Login is the correct action name
+import { Login } from "../../store/authSlice";
 import { motion } from 'framer-motion';
 import ErrorDialog from '../ErrorDialog';
-import ImageUpload from '../common/ImageUpload'; // Ensure this path is correct
+import ImageUpload from '../common/ImageUpload';
 
 function AdminSignup() {
     const navigate = useNavigate();
@@ -55,7 +55,6 @@ function AdminSignup() {
             password: value
         }));
 
-        // Provide immediate feedback for password length
         if (value.length > 0 && value.length < 6) {
             setPasswordError('Password must be at least 6 characters long');
         } else {
@@ -65,63 +64,50 @@ function AdminSignup() {
 
     const signup = async (e) => {
         e.preventDefault();
-        // Reset error before attempting signup
         setError(null);
-        
-        // Basic check before proceeding
+
         if (passwordError || !adminInfo.name || !adminInfo.contact || !adminInfo.email || !adminInfo.avatar || !adminInfo.password) {
              setError({ code: 'validation-error', message: 'Please fill all required fields and ensure password meets requirements.' });
              return;
         }
 
-        // *** FIX: Set submitting state to true ***
-        setIsSubmitting(true); 
+        setIsSubmitting(true);
 
         try {
-            // 1. Create user in Firebase Auth
             const userCredential = await createUserWithEmailAndPassword(auth, adminInfo.email, adminInfo.password);
             const user = userCredential.user;
 
-            // 2. Update Firebase Auth Profile (optional but good practice)
             await updateProfile(user, {
                 displayName: adminInfo.name,
-                photoURL: adminInfo.avatar // Ensure ImageUpload provides a usable URL
+                photoURL: adminInfo.avatar
             });
 
-            // 3. Add admin details to Firestore 'AdminInfo' collection
-            // Ensure email is stored consistently (e.g., lowercase)
-            await addDoc(collection(db, "AdminInfo"), {
+            await addDoc(collection(db, "admins"), {
                 uid: user.uid,
-                role: adminInfo.role, // "admin"
+                role: adminInfo.role,
                 name: adminInfo.name,
                 contact: adminInfo.contact,
-                email: adminInfo.email.toLowerCase(), 
+                email: adminInfo.email.toLowerCase(),
                 avatar: adminInfo.avatar,
-                createdAt: new Date() // Use Firestore server timestamp for better accuracy if needed
+                createdAt: new Date()
             });
 
-            // 4. Dispatch login action to update Redux state
-            // Ensure the payload matches what your Login reducer expects
-            dispatch(Login({ 
-                // Pass necessary user details, uid is crucial
-                userData: { 
-                    uid: user.uid, 
-                    email: user.email, 
-                    displayName: adminInfo.name, // Use the name from the form
-                    photoURL: adminInfo.avatar, // Use the avatar from the form
-                    role: adminInfo.role // Explicitly include the role
+            dispatch(Login({
+                userData: {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: adminInfo.name,
+                    photoURL: adminInfo.avatar,
+                    role: adminInfo.role,
+                    contact: adminInfo.contact
                 },
-                isLoggedIn: true 
+                isLoggedIn: true
             }));
 
-            // 5. Navigate to the admin dashboard *after* successful state update (usually okay)
-            navigate("/admin-dashboard"); 
-            // If redirection still fails, the issue is likely in ProtectedRoute or Redux timing
-
+            navigate("/admin-dashboard");
         } catch (error) {
-            console.error("Admin Signup Error:", error); // Log the full error
+            console.error("Admin Signup Error:", error);
             let errorMessage;
-            // Map Firebase error codes to user-friendly messages
             switch (error.code) {
                 case 'auth/email-already-in-use':
                     errorMessage = 'This email address is already registered. Please try logging in.';
@@ -140,14 +126,15 @@ function AdminSignup() {
             }
             setError({ code: error.code || 'unknown-error', message: errorMessage });
         } finally {
-            // Ensure submitting state is reset regardless of success or failure
-            setIsSubmitting(false); 
+            setIsSubmitting(false);
         }
     };
 
+    const isFormValid = adminInfo.name && adminInfo.contact && adminInfo.email && adminInfo.password && adminInfo.avatar && !passwordError;
+
     return (
         <div className="auth-container">
-            <motion.div 
+            <motion.div
                 className="auth-card"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -158,14 +145,12 @@ function AdminSignup() {
                     <p className="auth-subtitle">Create a new administrator account</p>
                 </div>
 
-                <form className="auth-form" onSubmit={signup} noValidate> 
-                    {/* Added noValidate to rely on custom validation */}
-                    
-                    {/* Form Fields (Name, Contact, Email) */}
+                <form className="auth-form" onSubmit={signup} noValidate>
+
                      <div className="form-group">
                         <label className="form-label" htmlFor="name">Full Name</label>
                         <input
-                            id="name" // Added id for label association
+                            id="name"
                             type="text"
                             name="name"
                             className="form-input"
@@ -173,7 +158,7 @@ function AdminSignup() {
                             onChange={handleChange}
                             placeholder="Enter your full name"
                             required
-                            aria-required="true" // Accessibility
+                            aria-required="true"
                         />
                     </div>
 
@@ -181,7 +166,7 @@ function AdminSignup() {
                         <label className="form-label" htmlFor="contact">Contact Number</label>
                         <input
                             id="contact"
-                            type="tel" // Use tel type for phone numbers
+                            type="tel"
                             name="contact"
                             className="form-input"
                             value={adminInfo.contact}
@@ -204,10 +189,10 @@ function AdminSignup() {
                             placeholder="Enter your email"
                             required
                             aria-required="true"
+                            aria-invalid={false} // Add aria-invalid based on email validation if implemented
                         />
                     </div>
 
-                    {/* Image Upload */}
                     <div className="form-group">
                         <label className="form-label">Profile Picture</label>
                         <ImageUpload
@@ -216,53 +201,51 @@ function AdminSignup() {
                             onRemoveImage={handleRemoveImage}
                             disabled={isSubmitting}
                         />
-                         {!adminInfo.avatar && <p className="info-message">Profile picture is required.</p>} {/* Added info message */}
+                         {!adminInfo.avatar && <p className="info-message" aria-live="polite">Profile picture is required.</p>}
                     </div>
 
-                    {/* Password Field */}
                     <div className="form-group">
                         <label className="form-label" htmlFor="password">Password</label>
                         <input
                             id="password"
                             type="password"
                             name="password"
-                             // Add error class conditionally
                             className={`form-input ${passwordError ? 'error' : ''}`}
                             value={adminInfo.password}
                             onChange={handlePasswordChange}
                             placeholder="Create a password (min. 6 characters)"
                             required
                             aria-required="true"
-                            aria-describedby="password-error-msg" // Link error message
+                            aria-invalid={!!passwordError}
+                            aria-describedby="password-error-msg"
                         />
                         {passwordError && (
-                            <motion.div 
-                                id="password-error-msg" // Added id for aria-describedby
-                                className="error-message" // Use a specific class for styling errors
+                            <motion.div
+                                id="password-error-msg"
+                                className="error-message"
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3 }}
+                                aria-live="assertive"
                             >
                                 {passwordError}
                             </motion.div>
                         )}
                     </div>
 
-                    {/* Submit Button */}
                     <motion.button
                         type="submit"
                         className="auth-button"
-                         // Disable based on submitting state, missing avatar, or password error
-                        disabled={isSubmitting || !adminInfo.avatar || !!passwordError} 
-                        whileHover={{ scale: isSubmitting || !adminInfo.avatar || !!passwordError ? 1 : 1.02 }} // Disable hover effect when disabled
-                        whileTap={{ scale: isSubmitting || !adminInfo.avatar || !!passwordError ? 1 : 0.98 }} // Disable tap effect when disabled
-                        aria-disabled={isSubmitting || !adminInfo.avatar || !!passwordError}
+                        disabled={isSubmitting || !isFormValid}
+                        whileHover={{ scale: isFormValid ? 1.02 : 1 }}
+                        whileTap={{ scale: isFormValid ? 0.98 : 1 }}
+                        aria-disabled={isSubmitting || !isFormValid}
+                        aria-label={isSubmitting ? 'Creating account, please wait' : 'Register as Admin'}
                     >
                         {isSubmitting ? 'Creating Account...' : 'Register as Admin'}
                     </motion.button>
                 </form>
 
-                 {/* Link to Login */}
                 <div className="auth-links">
                     <p>
                         Already have an admin account?{' '}
@@ -272,8 +255,7 @@ function AdminSignup() {
                     </p>
                 </div>
             </motion.div>
-            
-            {/* Error Dialog */}
+
             {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </div>
     );

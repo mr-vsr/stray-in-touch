@@ -1,23 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-function Form({
+const Form = ({
     data,
     strayInfo,
     pushData,
     uploadImage,
     isUploading,
     isSubmitting,
-    uploadError
-}) {
+    uploadError,
+    contactError
+}) => {
     return (
-        <motion.form
-            className='stray-report-form'
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            onSubmit={pushData}
-        >
+        <motion.form 
+        className="stray-report-form"
+        onSubmit={pushData}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+    >
             <motion.h2
                 className="stray-report-form-heading"
                 initial={{ y: -20, opacity: 0 }}
@@ -57,6 +58,7 @@ function Form({
                     value={strayInfo.contact}
                     required
                 />
+                {contactError && <span className="error-message">{contactError}</span>}
             </motion.div>
 
             <motion.div
@@ -133,6 +135,6 @@ function Form({
             </motion.button>
         </motion.form>
     );
-}
+};
 
 export default Form;

@@ -4921,3 +4921,140 @@ body {
   }
 }
 
+.help-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.help-dialog-content {
+  background: var(--background-white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 600px;
+  box-shadow: var(--shadow-lg);
+  animation: dialogSlideIn 0.3s ease-out forwards;
+}
+
+.help-dialog-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-extra-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.help-dialog-header h2 {
+  font-size: 1.25rem;
+  color: var(--text-dark);
+  margin: 0;
+  font-weight: 600;
+}
+
+.help-dialog-body {
+  padding: 1.5rem;
+}
+
+.help-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.help-dialog-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.help-dialog-form-label {
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.help-dialog-form-input,
+.help-dialog-form-textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+}
+
+.help-dialog-form-textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.help-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-extra-light);
+}
+
+.help-dialog-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.help-dialog-button.cancel {
+  background: transparent;
+  color: var(--text-gray);
+  border: 1px solid var(--border-medium);
+}
+
+.help-dialog-button.submit {
+  background: var(--primary-orange);
+  color: white;
+  border: none;
+}
+
+.help-dialog-button:hover {
+  transform: translateY(-2px);
+}
+
+.help-dialog-button.submit:hover {
+  background: var(--primary-orange-dark);
+  box-shadow: var(--shadow-button-hover);
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .help-dialog-overlay {
+    padding: 1rem;
+  }
+  
+  .help-dialog-content {
+    max-width: 100%;
+  }
+  
+  .help-dialog-actions {
+    flex-direction: column;
+  }
+  
+  .help-dialog-button {
+    width: 100%;
+    text-align: center;
+  }
+}

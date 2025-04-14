@@ -26,9 +26,46 @@ function Signup() {
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [passwordError, setPasswordError] = useState('');
+    const [contactError, setContactError] = useState('');
+    const [emailError, setEmailError] = useState('');
+
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        if (name === 'contact') {
+            const numbersOnly = value.replace(/\D/g, '');
+            if (numbersOnly.length <= 10) {
+                setUserInfo(prev => ({
+                    ...prev,
+                    contact: numbersOnly
+                }));
+                if (numbersOnly.length > 0 && numbersOnly.length !== 10) {
+                    setContactError('Contact number must be exactly 10 digits');
+                } else {
+                    setContactError('');
+                }
+            }
+            return;
+        }
+
+        if (name === 'email') {
+            setUserInfo(prev => ({
+                ...prev,
+                email: value
+            }));
+            if (value.length > 0 && !validateEmail(value)) {
+                setEmailError('Please enter a valid email address');
+            } else {
+                setEmailError('');
+            }
+            return;
+        }
+
         setUserInfo(prev => ({
             ...prev,
             [name]: value
@@ -42,7 +79,6 @@ function Signup() {
             password: value
         }));
 
-        // Password validation
         if (value.length > 0 && value.length < 6) {
             setPasswordError('Password must be at least 6 characters long');
         } else {
@@ -64,29 +100,54 @@ function Signup() {
         }));
     };
 
-    const validateEmail = (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    };
 
     const signup = async (e) => {
         e.preventDefault();
-        
-        if (!userInfo.avatar) {
-            setError({ 
-                code: 'validation/no-avatar', 
-                message: 'Please upload a profile picture' 
-            });
-            return;
-        }
+        setError(null);
 
-        if (passwordError) {
-            setError({ 
-                code: 'validation/password', 
-                message: passwordError 
+        if (!userInfo.avatar) {
+            setError({
+                code: 'validation/no-avatar',
+                message: 'Please upload a profile picture'
             });
             return;
         }
+         if (emailError) {
+             setError({
+                 code: 'validation/email',
+                 message: emailError
+             });
+             return;
+         }
+        if (contactError) {
+            setError({
+                code: 'validation/contact',
+                message: contactError
+            });
+            return;
+        }
+        if (passwordError) {
+            setError({
+                code: 'validation/password',
+                message: passwordError
+            });
+            return;
+        }
+        if (!userInfo.name.trim() || !userInfo.contact.trim() || !userInfo.email.trim() || !userInfo.password) {
+             setError({
+                 code: 'validation/required',
+                 message: 'Please fill in all required fields correctly.'
+             });
+             return;
+        }
+         if (userInfo.contact.length !== 10) {
+             setContactError('Contact number must be exactly 10 digits');
+              setError({
+                 code: 'validation/contact',
+                 message: 'Contact number must be exactly 10 digits'
+             });
+             return;
+         }
 
         setIsSubmitting(true);
 
@@ -94,7 +155,6 @@ function Signup() {
             const userCredential = await createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password);
             const user = userCredential.user;
 
-            // Update user profile
             await updateProfile(user, {
                 displayName: userInfo.name,
                 photoURL: userInfo.avatar
@@ -112,13 +172,20 @@ function Signup() {
                 createdAt: new Date()
             });
 
-            // Login the user
+            // Update the LogIn dispatch to include role
             dispatch(LogIn({
-                userData: user,
+                userData: {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: userInfo.name,
+                    photoURL: userInfo.avatar,
+                    role: userInfo.role,
+                    contact: userInfo.contact
+                },
                 isLoggedIn: true
             }));
 
-            navigate("/user-homepage");
+            navigate("/user-homepage"); // Updated navigation path
         } catch (error) {
             let errorMessage;
             switch (error.code) {
@@ -126,23 +193,28 @@ function Signup() {
                     errorMessage = 'This email is already registered. Please sign in instead.';
                     break;
                 case 'auth/invalid-email':
-                    errorMessage = 'Invalid email format. Please enter a valid email address.';
+                    errorMessage = 'Invalid email format. Please check your email address.';
+                    setEmailError('Invalid email format provided.');
                     break;
                 case 'auth/weak-password':
-                    errorMessage = 'Password should be at least 6 characters long.';
+                    errorMessage = 'Password is too weak. It should be at least 6 characters long.';
+                    setPasswordError('Password should be at least 6 characters long.');
                     break;
                 default:
-                    errorMessage = 'An error occurred during signup. Please try again.';
+                    errorMessage = `An error occurred during signup: ${error.message || 'Please try again.'}`;
             }
             setError({ code: error.code, message: errorMessage });
+            console.error("Signup Error:", error);
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const isFormValid = userInfo.name && userInfo.contact && userInfo.email && userInfo.password && userInfo.avatar && !passwordError && !contactError && !emailError;
+
     return (
         <div className="auth-container">
-            <motion.div 
+            <motion.div
                 className="auth-card"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -173,12 +245,25 @@ function Signup() {
                         <input
                             type="tel"
                             name="contact"
-                            className="form-input"
+                            className={`form-input ${contactError ? 'error' : ''}`}
                             value={userInfo.contact}
                             onChange={handleChange}
-                            placeholder="Enter your contact number"
+                            placeholder="Enter your 10-digit contact number"
                             required
+                            maxLength="10"
+                            inputMode="numeric"
+                            pattern="\d{10}"
                         />
+                        {contactError && (
+                            <motion.div
+                                className="error-message"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {contactError}
+                            </motion.div>
+                        )}
                     </div>
 
                     <div className="form-group">
@@ -186,12 +271,22 @@ function Signup() {
                         <input
                             type="email"
                             name="email"
-                            className="form-input"
+                            className={`form-input ${emailError ? 'error' : ''}`}
                             value={userInfo.email}
                             onChange={handleChange}
                             placeholder="Enter your email"
                             required
                         />
+                         {emailError && (
+                            <motion.div
+                                className="error-message"
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {emailError}
+                            </motion.div>
+                        )}
                     </div>
 
                     <div className="form-group">
@@ -227,11 +322,11 @@ function Signup() {
                             className={`form-input ${passwordError ? 'error' : ''}`}
                             value={userInfo.password}
                             onChange={handlePasswordChange}
-                            placeholder="Create a password"
+                            placeholder="Create a password (min. 6 characters)"
                             required
                         />
                         {passwordError && (
-                            <motion.div 
+                            <motion.div
                                 className="error-message"
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -245,9 +340,9 @@ function Signup() {
                     <motion.button
                         type="submit"
                         className="auth-button"
-                        disabled={isSubmitting || !userInfo.avatar || passwordError}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        disabled={isSubmitting || !isFormValid}
+                        whileHover={{ scale: isFormValid ? 1.02 : 1 }}
+                        whileTap={{ scale: isFormValid ? 0.98 : 1 }}
                     >
                         {isSubmitting ? 'Creating Account...' : 'Register'}
                     </motion.button>
@@ -262,10 +357,10 @@ function Signup() {
                     </p>
                 </div>
             </motion.div>
-            
+
             {error && <ErrorDialog error={error} onClose={() => setError(null)} />}
         </div>
     );
 }
 
-export default Signup;
+export default Signup; // Corrected export name
