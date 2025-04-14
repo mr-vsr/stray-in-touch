@@ -490,13 +490,3 @@ function NgoHomePage() {
 }
 
 export default NgoHomePage;
-
-<div className="ngo-homepage-container">
-    <div className="ngo-homepage-content">
-        <div className="ngo-homepage-reports-section">
-            <div className="ngo-homepage-reports-grid">
-                {/* Your existing report cards */}
-            </div>
-        </div>
-    </div>
-</div>

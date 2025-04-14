@@ -4921,140 +4921,185 @@ body {
   }
 }
 
-.help-dialog-overlay {
+.dialog-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 2rem;
+  padding: 20px;
 }
 
-.help-dialog-content {
-  background: var(--background-white);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 600px;
+.dialog-content-box {
+  background-color: var(--background-white);
+  padding: 25px 30px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  animation: dialogSlideIn 0.3s ease-out forwards;
+  max-width: 550px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1001;
 }
 
-.help-dialog-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-extra-light);
+.dialog-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
 }
 
-.help-dialog-header h2 {
-  font-size: 1.25rem;
-  color: var(--text-dark);
+.dialog-title {
   margin: 0;
+  font-size: 1.3rem;
   font-weight: 600;
+  color: var(--text-dark);
 }
 
-.help-dialog-body {
-  padding: 1.5rem;
+.dialog-close-button {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-gray);
+  padding: 0 5px;
+  transition: color var(--transition-base);
+}
+
+.dialog-close-button:hover {
+  color: var(--text-dark);
+}
+
+.dialog-close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.help-dialog-subtitle {
+  margin-top: -10px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  color: var(--text-gray);
 }
 
 .help-dialog-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 15px;
 }
 
-.help-dialog-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.help-dialog-form-label {
-  font-weight: 500;
-  color: var(--text-dark);
-}
-
-.help-dialog-form-input,
-.help-dialog-form-textarea {
+.form-textarea {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 10px 12px;
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-sm);
   font-size: 1rem;
-}
-
-.help-dialog-form-textarea {
-  min-height: 150px;
+  line-height: 1.5;
   resize: vertical;
+  min-height: 100px;
+  box-sizing: border-box;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
-.help-dialog-actions {
+.form-textarea:focus {
+  border-color: var(--primary-orange);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-light-orange);
+}
+
+.form-textarea:disabled {
+    background-color: var(--background-light);
+    cursor: not-allowed;
+}
+
+.dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-extra-light);
+  gap: 10px;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-light);
 }
 
-.help-dialog-button {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-full);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.dialog-button-cancel,
+.dialog-button-submit {
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
-.help-dialog-button.cancel {
-  background: transparent;
-  color: var(--text-gray);
-  border: 1px solid var(--border-medium);
+.dialog-button-cancel.button-secondary {
+    background-color: var(--text-gray);
+    color: var(--background-white);
+    border: 1px solid var(--text-gray);
+}
+.dialog-button-cancel.button-secondary:hover:not(:disabled) {
+    background-color: var(--text-dark);
+    border-color: var(--text-dark);
+}
+.dialog-button-cancel.button-secondary:focus {
+    box-shadow: 0 0 0 2px var(--primary-light-orange); /* Standardize focus */
+    outline: none;
 }
 
-.help-dialog-button.submit {
-  background: var(--primary-orange);
-  color: white;
-  border: none;
+.dialog-button-submit.button-primary {
+    background-color: var(--primary-orange);
+    color: var(--background-white);
+    border: 1px solid var(--primary-orange);
+}
+.dialog-button-submit.button-primary:hover:not(:disabled) {
+    background-color: var(--primary-orange-dark);
+    border-color: var(--primary-orange-dark);
+}
+.dialog-button-submit.button-primary:focus {
+     box-shadow: 0 0 0 2px var(--primary-light-orange);
+     outline: none;
 }
 
-.help-dialog-button:hover {
-  transform: translateY(-2px);
+.dialog-button-cancel:disabled,
+.dialog-button-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
 }
 
-.help-dialog-button.submit:hover {
-  background: var(--primary-orange-dark);
-  box-shadow: var(--shadow-button-hover);
+.error-message-text.dialog-error {
+  color: var(--danger-red);
+  background-color: var(--danger-light);
+  border: 1px solid var(--danger-red);
+  padding: 10px 15px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 15px;
+  font-size: 0.9rem;
 }
 
-@keyframes dialogSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
+@media (max-width: 600px) {
+  .dialog-content-box {
+    padding: 20px;
+    max-width: 95%;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .dialog-title {
+    font-size: 1.2rem;
   }
-}
-
-@media (max-width: 640px) {
-  .help-dialog-overlay {
-    padding: 1rem;
-  }
-  
-  .help-dialog-content {
-    max-width: 100%;
-  }
-  
-  .help-dialog-actions {
+  .dialog-actions {
     flex-direction: column;
+    gap: 8px;
   }
-  
-  .help-dialog-button {
-    width: 100%;
-    text-align: center;
+  .dialog-button-cancel,
+  .dialog-button-submit {
+      width: 100%;
+      text-align: center;
   }
 }
