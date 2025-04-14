@@ -5,6 +5,7 @@ import './App.css';
 import { Header, Footer, ProtectedRoute, AccessDenied } from './components';
 import { PageLoader } from './components/Loading';
 import PageTransition from './components/PageTransition';
+import ChatBot from './components/chatbot/ChatBot'; // Add this import
 import { useDispatch } from 'react-redux';
 import { onAuthStateChanged, signOut } from 'firebase/auth'; // Import signOut here
 import { auth, db } from './auth/firebase-config';
@@ -134,6 +135,7 @@ function App() {
           </Suspense>
         </main>
         <Footer />
+        <ChatBot /> {/* Add ChatBot component here */}
       </div>
     </Router>
   );
