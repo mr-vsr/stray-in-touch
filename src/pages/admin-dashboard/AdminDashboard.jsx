@@ -128,7 +128,7 @@ const AdminDashboard = () => {
                 ...doc.data(),
                 type: category,
                 // Ensure email field is properly mapped for subscribers
-                email: category === 'subscribers' ? doc.data().Email : doc.data().email
+                email: category === 'subscribers' ? doc.data()?.email : doc.data().email
             }));
             setModalData(data);
             setSelectedCategory(category);
