@@ -22,7 +22,7 @@ const AdminLogin = React.lazy(() => import('./components/login/AdminLogin'));
 const UserSignup = React.lazy(() => import('./components/signup/UserSignup'));
 const NgoSignup = React.lazy(() => import('./components/signup/NgoSignup'));
 const AdminSignup = React.lazy(() => import('./components/signup/AdminSignup'));
-const UserHomePage = React.lazy(() => import('./pages/user-homepage/UserHomePage'));
+const UserHomePage = React.lazy(() => import('./pages/user-homepage/UserHomePage.jsx'));
 const NgoHomePage = React.lazy(() => import('./pages/ngo-homepage/NgoHomePage'));
 const AdminDashboard = React.lazy(() => import('./pages/admin-dashboard/AdminDashboard'));
 
