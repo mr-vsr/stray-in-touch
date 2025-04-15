@@ -235,6 +235,7 @@ function Signup() {
                     <div className="form-group">
                         <label className="form-label">Profile Picture</label>
                         <ImageUpload
+                            label="Upload Profile Picture"
                             onImageUpload={handleImageUpload} previewUrl={userInfo.avatar}
                             onRemoveImage={handleRemoveImage} disabled={isSubmitting}
                         />

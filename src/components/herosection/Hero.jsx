@@ -233,7 +233,7 @@ const Hero = () => {
     return (
         <div className="updated-page-container">
             <motion.div
-                className="hero-section-container updated-hero-section"
+                className="hero-section-container"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.75 }}
@@ -266,7 +266,7 @@ const Hero = () => {
                 </div>
             </motion.div>
 
-            <div className='hero-section-form-container updated-section'>
+            <div className='hero-section-form-container'>
                 <Form
                     data={data}
                     strayInfo={strayInfo}

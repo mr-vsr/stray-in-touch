@@ -231,6 +231,7 @@ function AdminSignup() {
                     <div className="form-group">
                         <label className="form-label">Profile Picture</label>
                         <ImageUpload
+                            label="Upload Profile Picture"
                             onImageUpload={handleImageUpload} previewUrl={adminInfo.avatar}
                             onRemoveImage={handleRemoveImage} disabled={isSubmitting}
                         />

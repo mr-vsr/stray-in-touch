@@ -236,6 +236,7 @@ function NgoSignup() {
                     <div className="form-group">
                         <label className="form-label">Banner Image</label>
                         <ImageUpload
+                            label="Upload NGO Banner"
                             onImageUpload={handleImageUpload} previewUrl={ngoInfo.banner}
                             onRemoveImage={handleRemoveImage} disabled={isSubmitting}
                         />

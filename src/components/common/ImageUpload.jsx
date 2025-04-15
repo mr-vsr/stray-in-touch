@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
-// Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = 'dnjc1ik5l';
 const CLOUDINARY_UPLOAD_PRESET = 'stray-in-touch';
+const INPUT_ID = "image-upload-input-field";
 
 function ImageUpload({ onImageUpload, label, previewUrl, onRemoveImage, disabled }) {
     const [isUploading, setIsUploading] = useState(false);
@@ -40,7 +40,12 @@ function ImageUpload({ onImageUpload, label, previewUrl, onRemoveImage, disabled
             );
 
             if (!res.ok) {
-                throw new Error(`Upload failed with status: ${res.status}`);
+                 let errorMsg = `Upload failed with status: ${res.status}`;
+                 try {
+                     const errorData = await res.json();
+                     errorMsg = errorData?.error?.message || errorMsg;
+                 } catch (_) { }
+                 throw new Error(errorMsg);
             }
 
             const data = await res.json();
@@ -62,17 +67,21 @@ function ImageUpload({ onImageUpload, label, previewUrl, onRemoveImage, disabled
     return (
         <motion.div
             className="image-upload-container"
-            whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
         >
-            <label className="image-upload-label">{label}</label>
+            <label htmlFor={INPUT_ID} className="image-upload-label">
+                {label}
+            </label>
             <input
+                id={INPUT_ID}
                 type="file"
                 accept="image/*"
                 onChange={(e) => uploadImage(e.target.files)}
                 className="image-upload-input"
                 disabled={isUploading || disabled}
+                aria-label={label}
             />
+
             {isUploading && (
                 <div className="upload-loading">
                     Uploading image... Please wait.
@@ -80,15 +89,19 @@ function ImageUpload({ onImageUpload, label, previewUrl, onRemoveImage, disabled
             )}
             {previewUrl && !isUploading && (
                 <div className="image-preview-container">
-                    <img src={previewUrl} alt="Preview" />
+                    <img src={previewUrl} alt="Upload preview" className="image-preview" />
                     <button
                         type="button"
                         className="remove-image-button"
                         onClick={onRemoveImage}
+                        aria-label="Remove uploaded image"
                     >
                         ×
                     </button>
                 </div>
+            )}
+             {!previewUrl && !isUploading && !error && (
+                 <span className="upload-placeholder">Max 2MB</span>
             )}
             {error && (
                 <div className="upload-error error-message">
@@ -99,4 +112,4 @@ function ImageUpload({ onImageUpload, label, previewUrl, onRemoveImage, disabled
     );
 }
 
-export default ImageUpload; 
+export default ImageUpload;
