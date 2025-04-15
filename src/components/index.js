@@ -6,7 +6,7 @@ import UserCard from './cards/UserCard';
 import DonationsCta from './herosection/DonationsCta';
 import Footer from './footer/Footer';
 import Form from './form/Form';
-import Header from './header/Header';
+import Header from './header/header';
 import Hero from './herosection/Hero';
 import KnowAboutUs from './herosection/KnowAboutUs';
 import NgoLogin from './login/NgoLogin';
