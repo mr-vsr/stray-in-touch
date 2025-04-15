@@ -103,7 +103,7 @@ const ReportCard = React.memo(({ report, ngoLocation, onHelpClick }) => {
                     </span>
                     <span className="info-card-detail-contact">
                         <i className="fas fa-phone"></i>
-                        {report.user?.contact || 'N/A'}
+                        {report.contact || report.user?.contact || 'N/A'}
                     </span>
                 </div>
 
@@ -162,15 +162,14 @@ function NgoHomePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedReport, setSelectedReport] = useState(null);
-    const [statusFilter, setStatusFilter] = useState('pending'); // Default to pending
+    const [statusFilter, setStatusFilter] = useState('pending');
     const [currentNgo, setCurrentNgo] = useState(null);
     const [showHelpDialog, setShowHelpDialog] = useState(false);
     const [helpDescription, setHelpDescription] = useState('');
     const [isSubmittingHelp, setIsSubmittingHelp] = useState(false);
     const [ngoLocation, setNgoLocation] = useState(null);
-    const [searchTerm, setSearchTerm] = useState(''); // State for search
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Fetch Current NGO Details (Memoized)
     const fetchCurrentNgo = useCallback(async () => {
         setError(null);
         try {
@@ -212,35 +211,35 @@ function NgoHomePage() {
         }
     }, []);
 
-    // Fetch Reports (Memoized and Optimized)
     const fetchReportsAndUsers = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            // Fetch users only once or when needed
             const usersCollection = collection(db, 'users');
             const usersSnapshot = await getDocs(usersCollection);
             const userMap = new Map(usersSnapshot.docs.map(doc => {
                 const userData = doc.data();
                 const normalizedContact = normalizeContact(userData.contact);
                 return normalizedContact ? [normalizedContact, { id: doc.id, ...userData }] : null;
-            }).filter(Boolean)); // Filter out null entries if contact is missing
+            }).filter(Boolean));
 
 
             const reportsCollection = collection(db, 'strayInfo');
             const reportsSnapshot = await getDocs(reportsCollection);
 
+            // In the fetchReportsAndUsers function
             const reportsList = reportsSnapshot.docs.map(doc => {
                 const reportData = doc.data();
                 const reportContact = normalizeContact(reportData.contact);
-                const userData = userMap.get(reportContact); // Efficient lookup
-                const status = reportData.status || 'pending';
-
+                
                 return {
                     id: doc.id,
                     ...reportData,
-                    status: status,
-                    user: userData || null,
+                    status: reportData.status || 'pending',
+                    user: {
+                        name: reportData.userName || 'Anonymous',
+                        contact: reportData.contact || 'N/A'
+                    },
                     timestamp: reportData.timestamp instanceof Timestamp ? reportData.timestamp : null
                 };
             });
@@ -253,19 +252,17 @@ function NgoHomePage() {
         } finally {
             setLoading(false);
         }
-    }, []); // Empty dependency array - fetch once
+    }, []);
 
-    // Initial Data Load
     useEffect(() => {
         fetchCurrentNgo();
         fetchReportsAndUsers();
     }, [fetchCurrentNgo, fetchReportsAndUsers]);
 
-    // Handle Help Dialog Submission
     const handleHelpSubmit = async (e) => {
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
         if (!selectedReport || !helpDescription.trim() || !currentNgo || isSubmittingHelp) {
-            setError("Please provide help description."); // Simplified error
+            setError("Please provide help description.");
             return;
         }
 
@@ -279,22 +276,22 @@ function NgoHomePage() {
                 ngoName: currentNgo.name,
                 ngoAddress: currentNgo.address,
                 descriptionOfHelp: helpDescription,
-                timestamp: Timestamp.now() // Use Firestore Timestamp
+                timestamp: Timestamp.now()
             };
             await addDoc(collection(db, 'helpData'), helpDocData);
 
             const reportRef = doc(db, 'strayInfo', selectedReport.id);
             await updateDoc(reportRef, {
                 status: 'complete',
-                ngo: { // Store minimal NGO info needed for display
+                ngo: {
                     id: currentNgo.id,
                     name: currentNgo.name,
                     address: currentNgo.address,
-                    helpDescription: helpDescription // Store description here too if needed
+                    helpDescription: helpDescription,
+                    contact: currentNgo.contact
                 }
             });
 
-            // Update local state efficiently
             setReports(prevReports => prevReports.map(report =>
                 report.id === selectedReport.id
                     ? { ...report, status: 'complete', ngo: helpDocData } // Update with help data
@@ -313,28 +310,25 @@ function NgoHomePage() {
         }
     };
 
-    // Handle clicking "Provide Help"
     const handleHelpClick = (report) => {
         if (!currentNgo?.name || !currentNgo?.address) {
             setError("Please ensure your NGO profile (name and address) is complete before providing help.");
             return;
         }
         setSelectedReport(report);
-        setHelpDescription(''); // Reset description
+        setHelpDescription('');
         setShowHelpDialog(true);
-        setError(null); // Clear previous dialog errors
+        setError(null);
     };
 
-    // Debounced search handler
     const debouncedSearch = useCallback(debounce((term) => {
         setSearchTerm(term);
-    }, 300), []); // 300ms debounce
+    }, 300), []);
 
     const handleSearchChange = (e) => {
         debouncedSearch(e.target.value);
     };
 
-    // Filter reports based on status and search term
     const filteredReports = useMemo(() => {
         return reports.filter(report => {
             const matchesFilter = statusFilter === 'all' || report.status === statusFilter;

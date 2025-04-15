@@ -135,7 +135,7 @@ function App() {
           </Suspense>
         </main>
         <Footer />
-        <ChatBot /> {/* Add ChatBot component here */}
+        <ChatBot />
       </div>
     </Router>
   );
