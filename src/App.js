@@ -2,8 +2,8 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import './App.css';
-import { Header, Footer, ProtectedRoute, AccessDenied } from './components';
 import { PageLoader } from './components/Loading';
+import { Header, Footer, ProtectedRoute, AccessDenied } from './components';
 import PageTransition from './components/PageTransition';
 import ChatBot from './components/chatbot/ChatBot'; // Add this import
 import { useDispatch } from 'react-redux';
@@ -69,7 +69,7 @@ function App() {
         } else {
             console.error(`User ${userAuth.uid} authenticated but no profile found. Logging out.`);
             dispatch(Logout());
-            await signOut(auth); // Use the imported signOut function
+            await signOut(auth);
         }
 
       } else {

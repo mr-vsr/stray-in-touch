@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../auth/firebase-config";
 import { Link, useNavigate } from 'react-router-dom';
-import { styledLink } from '../../assets';
 import { motion } from 'framer-motion';
 import { collection, query, where, getDocs } from "firebase/firestore";
 import ErrorDialog from '../ErrorDialog';

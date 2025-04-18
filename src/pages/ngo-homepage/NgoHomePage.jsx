@@ -27,7 +27,7 @@ function debounce(func, wait) {
     };
 }
 
-// Utility: Calculate Distance
+// Utility: Calculate Distance (not being used)
 const getDistance = (lat1, lon1, lat2, lon2) => {
     if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
     const R = 6371; // Earth's radius in KM
@@ -237,7 +237,7 @@ function NgoHomePage() {
                     ...reportData,
                     status: reportData.status || 'pending',
                     user: {
-                        name: reportData.userName || 'Anonymous',
+                        name: reportData.informant || 'Anonymous',
                         contact: reportData.contact || 'N/A'
                     },
                     timestamp: reportData.timestamp instanceof Timestamp ? reportData.timestamp : null
@@ -270,14 +270,38 @@ function NgoHomePage() {
         setError(null);
 
         try {
+            // Get user details from the selected report
+            const reportContact = normalizeContact(selectedReport.contact);
+            let userData = null;
+
+            // If we have a contact, try to find the user in the users collection
+            if (reportContact) {
+                const usersQuery = query(
+                    collection(db, 'users'),
+                    where('contact', '==', reportContact)
+                );
+                const userSnapshot = await getDocs(usersQuery);
+                
+                if (!userSnapshot.empty) {
+                    userData = { id: userSnapshot.docs[0].id, ...userSnapshot.docs[0].data() };
+                }
+            }
+
             const helpDocData = {
                 reportId: selectedReport.id,
                 ngoId: currentNgo.id,
                 ngoName: currentNgo.name,
                 ngoAddress: currentNgo.address,
                 descriptionOfHelp: helpDescription,
-                timestamp: Timestamp.now()
+                timestamp: Timestamp.now(),
+                // Add user information
+                reportedBy: {
+                    userId: userData?.id || null,
+                    name: userData?.name || selectedReport.user?.name || 'Anonymous',
+                    contact: reportContact || selectedReport.user?.contact || 'N/A'
+                }
             };
+
             await addDoc(collection(db, 'helpData'), helpDocData);
 
             const reportRef = doc(db, 'strayInfo', selectedReport.id);
@@ -294,7 +318,7 @@ function NgoHomePage() {
 
             setReports(prevReports => prevReports.map(report =>
                 report.id === selectedReport.id
-                    ? { ...report, status: 'complete', ngo: helpDocData } // Update with help data
+                    ? { ...report, status: 'complete', ngo: helpDocData }
                     : report
             ));
 

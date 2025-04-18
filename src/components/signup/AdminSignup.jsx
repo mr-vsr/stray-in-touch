@@ -38,8 +38,6 @@ function AdminSignup() {
 
         if (name === 'contact') {
             const numbersOnly = value.replace(/\D/g, '');
-            // Allow flexibility or enforce 10 digits like user signup
-            // Example: Enforcing 10 digits (adjust if needed)
             if (numbersOnly.length <= 10) {
                  setAdminInfo(prev => ({ ...prev, contact: numbersOnly }));
                  if (numbersOnly.length > 0 && numbersOnly.length !== 10) {
@@ -87,7 +85,7 @@ function AdminSignup() {
     const signup = async (e) => {
         e.preventDefault();
         setError(null);
-
+    
         // Added checks for new error states
         if (!adminInfo.avatar) {
              setError({ code: 'validation/no-avatar', message: 'Please upload a profile picture.' }); return;
@@ -114,39 +112,45 @@ function AdminSignup() {
 
 
         setIsSubmitting(true);
-
+    
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, adminInfo.email, adminInfo.password);
             const user = userCredential.user;
-
+    
+            // Update profile
             await updateProfile(user, {
                 displayName: adminInfo.name,
                 photoURL: adminInfo.avatar
             });
-
-            await addDoc(collection(db, "admins"), {
+    
+            // Add to Firestore with proper document structure
+            const adminDocRef = await addDoc(collection(db, "admins"), {
                 uid: user.uid,
                 role: "admin",
                 name: adminInfo.name,
                 contact: adminInfo.contact,
                 email: adminInfo.email.toLowerCase(),
                 avatar: adminInfo.avatar,
-                createdAt: new Date()
+                createdAt: new Date().toISOString(),
+                isActive: true
             });
 
             dispatch(Login({
+                isLoggedIn: true,
                 userData: {
                     uid: user.uid,
-                    email: user.email,
+                    email: user.email.toLowerCase(),
                     displayName: adminInfo.name,
                     photoURL: adminInfo.avatar,
                     role: "admin",
-                    contact: adminInfo.contact
-                },
-                isLoggedIn: true
+                    contact: adminInfo.contact,
+                    docId: adminDocRef.id
+                }
             }));
 
-            navigate("/admin-dashboard");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            navigate("/admin-dashboard", { replace: true });
+            
         } catch (error) {
             console.error("Admin Signup Error:", error);
             let errorMessage;
