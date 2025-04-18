@@ -3189,11 +3189,13 @@ body {
 .search-input-container {
     flex-grow: 1;
     max-width: 300px;
+    position: relative;
+    bottom: 0.75rem;
 }
 
 .search-input-container .form-input {
     padding-left: 2.5rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23A0AEC0' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23A0AEC0' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E"); */
     background-repeat: no-repeat;
     background-position: 1rem center;
 }
@@ -5439,5 +5441,57 @@ body {
 
   .filter-button-group {
     justify-content: center;
+  }
+}
+
+.filter-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  justify-content: flex-start;
+}
+
+.filter-button {
+  padding: 0.5rem 1.2rem;
+  border: 1px solid var(--border-medium);
+  background-color: var(--background-white);
+  color: var(--text-dark);
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.filter-button:hover {
+  background-color: var(--background-light);
+  border-color: var(--text-gray);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-button.active {
+  background-color: var(--primary-orange);
+  color: var(--background-white);
+  border-color: var(--primary-orange);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-light-orange);
+}
+
+@media (max-width: 640px) {
+  .filter-button-group {
+    gap: 0.6rem;
+    justify-content: center;
+  }
+  .filter-button {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
   }
 }
