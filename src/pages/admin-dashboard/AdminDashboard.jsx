@@ -36,10 +36,9 @@ const AdminDashboard = () => {
             setLoading(true);
             setError(null);
             try {
-                // Check if user is authenticated
                 const user = auth.currentUser;
                 if (!user) {
-                    throw new Error('You must be logged in to access this page');
+                    throw new Error('You must be logged in as an admin to access this page');
                 }
                 await fetchDashboardStats();
             } catch (error) {
@@ -63,51 +62,61 @@ const AdminDashboard = () => {
                 subscribers: 'subscribersEmail',
                 donations: 'donations'
             };
-    
-            const stats = {};
-            
-            for (const [key, collectionName] of Object.entries(collections)) {
+
+            const statsPromises = Object.entries(collections).map(async ([key, collectionName]) => {
                 try {
                     const snapshot = await getDocs(collection(db, collectionName));
                     if (key === 'donations') {
-                        stats.totalDonations = snapshot.size;
                         let totalAmount = 0;
                         snapshot.docs.forEach(doc => {
                             const amount = parseFloat(doc.data().amount) || 0;
                             totalAmount += amount;
                         });
-                        stats.totalDonationAmount = Math.round(totalAmount * 100) / 100; // Round to 2 decimal places
+                        return {
+                            [`total${key.charAt(0).toUpperCase() + key.slice(1)}`]: snapshot.size,
+                            totalDonationAmount: Math.round(totalAmount * 100) / 100
+                        };
                     } else {
-                        stats[`total${key.charAt(0).toUpperCase() + key.slice(1)}`] = snapshot.size;
+                        return { [`total${key.charAt(0).toUpperCase() + key.slice(1)}`]: snapshot.size };
                     }
                 } catch (error) {
                     console.error(`Error fetching ${key}:`, error);
-                    stats[`total${key.charAt(0).toUpperCase() + key.slice(1)}`] = 0;
+                    if (key === 'donations') {
+                        return {
+                            [`total${key.charAt(0).toUpperCase() + key.slice(1)}`]: 0,
+                            totalDonationAmount: 0
+                        };
+                    } else {
+                        return { [`total${key.charAt(0).toUpperCase() + key.slice(1)}`]: 0 };
+                    }
                 }
-            }
-    
+            });
+
+            const results = await Promise.all(statsPromises);
+            const combinedStats = results.reduce((acc, current) => ({ ...acc, ...current }), {});
+
             setStats({
-                ...stats,
-                totalReports: stats.totalReports || 0,
-                totalHelpProvided: stats.totalHelp || 0,
-                totalNgos: stats.totalNgos || 0,
-                totalUsers: stats.totalUsers || 0,
-                totalSubscribers: stats.totalSubscribers || 0,
-                totalDonations: stats.totalDonations || 0,
-                totalDonationAmount: stats.totalDonationAmount || 0
+                totalReports: combinedStats.totalReports || 0,
+                totalHelpProvided: combinedStats.totalHelp || 0,
+                totalNgos: combinedStats.totalNgos || 0,
+                totalUsers: combinedStats.totalUsers || 0,
+                totalSubscribers: combinedStats.totalSubscribers || 0,
+                totalDonations: combinedStats.totalDonations || 0,
+                totalDonationAmount: combinedStats.totalDonationAmount || 0
             });
         } catch (error) {
             console.error('Error fetching stats:', error);
             setError('Failed to load dashboard statistics');
-            throw error;
         }
     };
 
+
     const handleShowMore = async (category) => {
         if (!category) return;
-        
+
         setLoading(true);
         setError(null);
+        setSearchTerm('');
         try {
             const collectionName = {
                 reports: 'strayInfo',
@@ -119,23 +128,33 @@ const AdminDashboard = () => {
             }[category];
 
             if (!collectionName) {
-                throw new Error('Invalid category');
+                throw new Error('Invalid category selected');
             }
 
             const snapshot = await getDocs(collection(db, collectionName));
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                type: category,
-                // Ensure email field is properly mapped for subscribers
-                email: category === 'subscribers' ? doc.data()?.email : doc.data().email
-            }));
+            const data = snapshot.docs.map(doc => {
+                 const docData = doc.data();
+                 const timestamp = docData.timestamp instanceof Date
+                    ? docData.timestamp
+                    : docData.timestamp?.toDate?.();
+
+                return {
+                    id: doc.id,
+                    ...docData,
+                    type: category,
+                    email: category === 'subscribers' ? docData?.email : docData.email,
+                    amount: category === 'donations' ? parseFloat(docData.amount) || 0 : undefined,
+                    timestamp: timestamp
+                };
+            });
+
             setModalData(data);
             setSelectedCategory(category);
             setShowModal(true);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error(`Error fetching ${category} data:`, error);
             setError(`Failed to load ${category} data: ${error.message}`);
+            setShowModal(false);
         } finally {
             setLoading(false);
         }
@@ -143,7 +162,11 @@ const AdminDashboard = () => {
 
     const handleDelete = async (item) => {
         if (!item.id || !item.type) return;
-        
+
+        if (!window.confirm(`Are you sure you want to delete this ${item.type}? This action cannot be undone.`)) {
+            return;
+        }
+
         try {
             const collectionName = {
                 reports: 'strayInfo',
@@ -154,71 +177,122 @@ const AdminDashboard = () => {
                 donations: 'donations'
             }[item.type];
 
+            if (!collectionName) throw new Error('Invalid item type for deletion');
+
             await deleteDoc(doc(db, collectionName, item.id));
-            
-            // Update modal data and stats
+
             setModalData(prevData => prevData.filter(d => d.id !== item.id));
-            setStats(prevStats => ({
-                ...prevStats,
-                [`total${item.type.charAt(0).toUpperCase() + item.type.slice(1)}s`]: prevStats[`total${item.type.charAt(0).toUpperCase() + item.type.slice(1)}s`] - 1
-            }));
+
+             const statKeyBase = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+             const statKey = item.type === 'help' ? 'totalHelpProvided' : `total${statKeyBase}`;
+
+
+            setStats(prevStats => {
+                 const currentCount = prevStats[statKey] || 0;
+                 const newStats = {
+                     ...prevStats,
+                     [statKey]: Math.max(0, currentCount - 1)
+                 };
+                 // Recalculate donation amount if a donation was deleted
+                 if (item.type === 'donations') {
+                    let newTotalAmount = 0;
+                    modalData.filter(d => d.id !== item.id && d.type === 'donations').forEach(donation => {
+                        newTotalAmount += donation.amount || 0;
+                    });
+                    newStats.totalDonationAmount = Math.round(newTotalAmount * 100) / 100;
+                 }
+                 return newStats;
+            });
+
         } catch (error) {
             console.error('Error deleting item:', error);
-            setError(`Failed to delete ${item.type}`);
+            setError(`Failed to delete ${item.type}: ${error.message}`);
         }
     };
+
 
     const handleUpdate = async (item, updatedData) => {
-        try {
-            let collectionName = '';
-            switch (item.type) {
-                case 'report':
-                    collectionName = 'strayInfo';
-                    break;
-                case 'help':
-                    collectionName = 'helpData';
-                    break;
-                case 'ngo':
-                    collectionName = 'NgoInfo';
-                    break;
-                case 'user':
-                    collectionName = 'users';
-                    break;
-                case 'subscriber':
-                    collectionName = 'subscribersEmail';
-                    break;
-                default:
-                    throw new Error('Invalid item type');
-            }
+         if (!item?.id || !item?.type || !updatedData) {
+            setError('Invalid data for update.');
+            return;
+        }
 
-            await updateDoc(doc(db, collectionName, item.id), updatedData);
-            setModalData(modalData.map(i => i.id === item.id ? { ...i, ...updatedData } : i));
+        const collectionName = {
+             reports: 'strayInfo',
+             help: 'helpData',
+             ngos: 'NgoInfo',
+             users: 'users',
+             subscribers: 'subscribersEmail',
+             donations: 'donations'
+         }[item.type];
+
+        if (!collectionName) {
+            setError('Invalid item type for update.');
+            return;
+        }
+
+        const dataToUpdate = {};
+        if (item.type === 'donations') {
+             if (updatedData.amount !== undefined && updatedData.amount !== item.amount) {
+                 dataToUpdate.amount = updatedData.amount;
+             }
+        } else if (item.type === 'subscribers') {
+             if (updatedData.email !== undefined && updatedData.email !== item.email) {
+                 dataToUpdate.email = updatedData.email;
+             }
+        }
+        else {
+             if (updatedData.name !== undefined && updatedData.name !== item.name) {
+                 dataToUpdate.name = updatedData.name;
+             }
+             if (updatedData.email !== undefined && updatedData.email !== item.email) {
+                 dataToUpdate.email = updatedData.email;
+             }
+        }
+
+        if (Object.keys(dataToUpdate).length === 0) {
             setEditItem(null);
+            return;
+        }
+
+        try {
+            await updateDoc(doc(db, collectionName, item.id), dataToUpdate);
+            setModalData(prevModalData =>
+                prevModalData.map(i =>
+                    i.id === item.id ? { ...i, ...dataToUpdate } : i
+                )
+            );
+            setEditItem(null);
+             // Recalculate donation amount if amount was updated
+            if (item.type === 'donations' && dataToUpdate.amount !== undefined) {
+                await fetchDashboardStats(); // Refetch stats to update total amount accurately
+            }
         } catch (error) {
             console.error('Error updating item:', error);
-            setError('Failed to update item');
+            setError(`Failed to update ${item.type}: ${error.message}`);
         }
     };
 
-    // Add filteredModalData before the loading check
+
     const filteredModalData = modalData.filter(item => {
         const searchLower = searchTerm.toLowerCase();
         if (!searchTerm) return true;
 
         switch (selectedCategory) {
             case 'subscribers':
-                return item.Email?.toLowerCase().includes(searchLower);
+                return item.email?.toLowerCase().includes(searchLower);
             case 'users':
                 return (
                     item.name?.toLowerCase().includes(searchLower) ||
                     item.email?.toLowerCase().includes(searchLower) ||
-                    item.contact?.toLowerCase().includes(searchLower)
+                    item.contact?.toString().toLowerCase().includes(searchLower)
                 );
             case 'ngos':
                 return (
                     item.name?.toLowerCase().includes(searchLower) ||
                     item.email?.toLowerCase().includes(searchLower) ||
-                    item.contact?.toLowerCase().includes(searchLower)
+                    item.contact?.toString().toLowerCase().includes(searchLower) ||
+                    item.address?.toLowerCase().includes(searchLower)
                 );
             case 'donations':
                 return (
@@ -230,46 +304,46 @@ const AdminDashboard = () => {
                 return (
                     item.description?.toLowerCase().includes(searchLower) ||
                     item.locationDescription?.toLowerCase().includes(searchLower) ||
-                    item.contact?.toLowerCase().includes(searchLower)
+                    item.contact?.toString().toLowerCase().includes(searchLower) ||
+                    item.informant?.toLowerCase().includes(searchLower)
                 );
             case 'help':
                 return (
+                    item.ngoName?.toLowerCase().includes(searchLower) ||
                     item.descriptionOfHelp?.toLowerCase().includes(searchLower) ||
-                    item.actionsTaken?.toLowerCase().includes(searchLower)
+                    item.ngoAddress?.toLowerCase().includes(searchLower)
                 );
             default:
-                return Object.values(item).some(val => 
-                    val?.toString().toLowerCase().includes(searchLower)
+                return Object.values(item).some(val =>
+                    typeof val === 'string' && val.toLowerCase().includes(searchLower)
                 );
         }
     });
 
-    if (loading) {
+    if (loading && !showModal) {
         return (
-            <div className="admin-dashboard-container">
-                <Loader 
+            <div className="admin-dashboard-container centered-container">
+                <Loader
                     type="default"
                     size="large"
-                    text="Loading dashboard data..."
+                    text="Loading Dashboard..."
                 />
             </div>
         );
     }
 
-    if (error) {
+     if (error && !showModal) {
         return (
-            <div className="admin-dashboard-container">
-                <div className="admin-dashboard-content">
-                    <div className="error-message">
-                        <h2>Error Loading Dashboard</h2>
-                        <p>{error}</p>
-                        <button 
-                            className="retry-button"
-                            onClick={() => fetchDashboardStats()}
-                        >
-                            Retry Loading
-                        </button>
-                    </div>
+            <div className="admin-dashboard-container centered-container">
+                <div className="error-message-card">
+                    <h2><i className="fas fa-exclamation-triangle"></i> Error Loading Dashboard</h2>
+                    <p>{error}</p>
+                    <button
+                        className="button-primary"
+                        onClick={() => window.location.reload()}
+                    >
+                        Retry
+                    </button>
                 </div>
             </div>
         );
@@ -278,238 +352,230 @@ const AdminDashboard = () => {
     return (
         <div className="admin-dashboard-container">
             <div className="admin-dashboard-content">
+                <h1>Admin Dashboard</h1>
+                 {error && showModal && (
+                    <div className="error-message-inline">{error}</div>
+                 )}
+
                 <motion.div
                     className="admin-dashboard-stats-grid"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
+                    initial="hidden" // Changed initial state name
+                    animate="visible" // Changed animate state name
+                    variants={{ // Defined variants container
+                        visible: { transition: { staggerChildren: 0.07 } } // Stagger animation defined here
+                    }}
                 >
-                    <div className="admin-dashboard-stat-card">
-                        <div className="admin-dashboard-stat-icon">
-                            <FaFileAlt />
-                        </div>
+                    <motion.div className="admin-dashboard-stat-card" variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="admin-dashboard-stat-icon report-icon"><FaFileAlt /></div>
                         <div className="admin-dashboard-stat-info">
                             <h3>Total Reports</h3>
                             <p>{stats.totalReports}</p>
                         </div>
-                        <button 
-                            className="show-more-button" 
-                            onClick={() => handleShowMore('reports')}
-                            aria-label="Show more reports"
-                        >
-                            Show More
-                        </button>
-                    </div>
+                        <button className="show-more-button" onClick={() => handleShowMore('reports')} aria-label="Show more reports">Show More</button>
+                    </motion.div>
 
-                    <div className="admin-dashboard-stat-card">
-                        <div className="admin-dashboard-stat-icon">
-                            <FaHandsHelping />
-                        </div>
+                    <motion.div className="admin-dashboard-stat-card" variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="admin-dashboard-stat-icon help-icon"><FaHandsHelping /></div>
                         <div className="admin-dashboard-stat-info">
                             <h3>Help Provided</h3>
                             <p>{stats.totalHelpProvided}</p>
                         </div>
-                        <button 
-                            className="show-more-button" 
-                            onClick={() => handleShowMore('help')}
-                            aria-label="Show more help records"
-                        >
-                            Show More
-                        </button>
-                    </div>
+                        <button className="show-more-button" onClick={() => handleShowMore('help')} aria-label="Show more help records">Show More</button>
+                    </motion.div>
 
-                    <div className="admin-dashboard-stat-card">
-                        <div className="admin-dashboard-stat-icon">
-                            <FaBuilding />
-                        </div>
+                    <motion.div className="admin-dashboard-stat-card" variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="admin-dashboard-stat-icon ngo-icon"><FaBuilding /></div>
                         <div className="admin-dashboard-stat-info">
                             <h3>NGOs Registered</h3>
                             <p>{stats.totalNgos}</p>
                         </div>
-                        <button 
-                            className="show-more-button" 
-                            onClick={() => handleShowMore('ngos')}
-                            aria-label="Show more NGOs"
-                        >
-                            Show More
-                        </button>
-                    </div>
+                        <button className="show-more-button" onClick={() => handleShowMore('ngos')} aria-label="Show more NGOs">Show More</button>
+                    </motion.div>
 
-                    <div className="admin-dashboard-stat-card">
-                        <div className="admin-dashboard-stat-icon">
-                            <FaUsers />
-                        </div>
+                    <motion.div className="admin-dashboard-stat-card" variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="admin-dashboard-stat-icon user-icon"><FaUsers /></div>
                         <div className="admin-dashboard-stat-info">
                             <h3>Total Users</h3>
                             <p>{stats.totalUsers}</p>
                         </div>
-                        <button 
-                            className="show-more-button" 
-                            onClick={() => handleShowMore('users')}
-                            aria-label="Show more users"
-                        >
-                            Show More
-                        </button>
-                    </div>
+                        <button className="show-more-button" onClick={() => handleShowMore('users')} aria-label="Show more users">Show More</button>
+                    </motion.div>
 
-                    <div className="admin-dashboard-stat-card">
-                        <div className="admin-dashboard-stat-icon">
-                            <FaEnvelope />
-                        </div>
+                    <motion.div className="admin-dashboard-stat-card" variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="admin-dashboard-stat-icon subscriber-icon"><FaEnvelope /></div>
                         <div className="admin-dashboard-stat-info">
                             <h3>Subscribers</h3>
                             <p>{stats.totalSubscribers}</p>
                         </div>
-                        <button 
-                            className="show-more-button" 
-                            onClick={() => handleShowMore('subscribers')}
-                            aria-label="Show more subscribers"
-                        >
-                            Show More
-                        </button>
-                    </div>
-                    <div className="admin-dashboard-stat-card">
-                        <div className="admin-dashboard-stat-icon">
-                            <FaDollarSign />
-                        </div>
+                        <button className="show-more-button" onClick={() => handleShowMore('subscribers')} aria-label="Show more subscribers">Show More</button>
+                    </motion.div>
+
+                    <motion.div className="admin-dashboard-stat-card" variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                        <div className="admin-dashboard-stat-icon donation-icon"><FaDollarSign /></div>
                         <div className="admin-dashboard-stat-info">
                             <h3>Total Donations</h3>
                             <p>Count: {stats.totalDonations}</p>
-                            <p className="amount-text">Total: ₹{stats.totalDonationAmount.toLocaleString()}</p>
+                            <p className="amount-text">Amount: ₹{stats.totalDonationAmount.toLocaleString('en-IN')}</p>
                         </div>
-                        <button 
-                            className="show-more-button" 
-                            onClick={() => handleShowMore('donations')}
-                            aria-label="Show more donations"
-                        >
-                            Show More
-                        </button>
-                    </div>
+                        <button className="show-more-button" onClick={() => handleShowMore('donations')} aria-label="Show more donations">Show More</button>
+                    </motion.div>
                 </motion.div>
 
                 {showModal && (
-                    <div className="admin-modal">
-                        <div className="admin-modal-content">
+                    <motion.div
+                        className="admin-modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => {
+                            setShowModal(false);
+                            setModalData([]);
+                            setSelectedCategory(null);
+                            setSearchTerm('');
+                            setEditItem(null);
+                            setError(null);
+                        }}
+                    >
+                        <motion.div
+                            className="admin-modal-content"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <div className="admin-modal-header">
                                 <h2>{selectedCategory?.charAt(0).toUpperCase() + selectedCategory?.slice(1)} Details</h2>
-                                <button 
-                                    className="close-button" 
+                                <button
+                                    className="admin-modal-close-button"
                                     onClick={() => {
                                         setShowModal(false);
                                         setModalData([]);
                                         setSelectedCategory(null);
                                         setSearchTerm('');
+                                        setEditItem(null);
+                                        setError(null);
                                     }}
                                     aria-label="Close modal"
                                 >
                                     <FaTimes />
                                 </button>
                             </div>
-                            <div className="admin-modal-search">
+
+                            <div className="admin-modal-controls">
                                 <input
                                     type="text"
-                                    placeholder="Search..."
+                                    placeholder={`Search ${selectedCategory}...`}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="admin-search-input"
                                 />
                             </div>
+
                             <div className="admin-modal-body">
                                 {loading ? (
-                                    <Loader type="default" size="medium" text="Loading data..." />
+                                    <Loader type="inline" size="medium" text={`Loading ${selectedCategory}...`} />
                                 ) : filteredModalData.length > 0 ? (
                                     filteredModalData.map(item => (
                                         <div key={item.id} className="admin-item-card">
                                             {editItem?.id === item.id ? (
-                                                <div className="edit-form">
-                                                    {selectedCategory === 'donations' ? (
-                                                        <>
-                                                            <input
-                                                                type="number"
-                                                                value={editItem.amount || ''}
-                                                                onChange={(e) => setEditItem({
-                                                                    ...editItem,
-                                                                    amount: parseFloat(e.target.value)
-                                                                })}
-                                                                placeholder="Enter amount"
-                                                            />
-                                                        </>
-                                                    ) : (
-                                                        <input
-                                                            type="text"
-                                                            value={editItem.name || editItem.email || ''}
-                                                            onChange={(e) => setEditItem({
-                                                                ...editItem,
-                                                                name: e.target.value,
-                                                                email: e.target.value
-                                                            })}
-                                                            placeholder="Enter name or email"
-                                                        />
+                                                <div className="admin-edit-form">
+                                                    <h4>Edit {item.type}</h4>
+                                                    {item.type === 'donations' && (
+                                                         <div className="form-group">
+                                                            <label>Amount (₹):</label>
+                                                            <input type="number" value={editItem.amount || ''} onChange={(e) => setEditItem({...editItem, amount: parseFloat(e.target.value) || 0})} />
+                                                        </div>
                                                     )}
+                                                     {item.type === 'subscribers' && (
+                                                         <div className="form-group">
+                                                            <label>Email:</label>
+                                                            <input type="email" value={editItem.email || ''} onChange={(e) => setEditItem({...editItem, email: e.target.value})} />
+                                                        </div>
+                                                    )}
+                                                    {(item.type === 'users' || item.type === 'ngos') && (
+                                                         <>
+                                                            <div className="form-group">
+                                                                <label>Name:</label>
+                                                                <input type="text" value={editItem.name || ''} onChange={(e) => setEditItem({...editItem, name: e.target.value})} />
+                                                            </div>
+                                                            <div className="form-group">
+                                                                <label>Email:</label>
+                                                                <input type="email" value={editItem.email || ''} onChange={(e) => setEditItem({...editItem, email: e.target.value})} />
+                                                            </div>
+                                                        </>
+                                                    )}
+
                                                     <div className="edit-actions">
-                                                        <button onClick={() => handleUpdate(item, editItem)}>
-                                                            Save
-                                                        </button>
-                                                        <button onClick={() => setEditItem(null)}>
-                                                            Cancel
-                                                        </button>
+                                                        <button className="button-primary" onClick={() => handleUpdate(item, editItem)}>Save</button>
+                                                        <button className="button-secondary" onClick={() => setEditItem(null)}>Cancel</button>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <>
                                                     <div className="item-details">
-                                                        {selectedCategory === 'donations' ? (
+                                                        {selectedCategory === 'donations' && (
                                                             <>
-                                                                <h3>₹{item.amount}</h3>
-                                                                <p>User: {item.userName || 'Anonymous'}</p>
-                                                                <p>Date: {new Date(item.timestamp?.toDate()).toLocaleDateString()}</p>
+                                                                <p><strong>Amount:</strong> ₹{item.amount?.toLocaleString('en-IN')}</p>
+                                                                <p><strong>User:</strong> {item.userName || 'N/A'}</p>
+                                                                <p><strong>Email:</strong> {item.email || 'N/A'}</p>
+                                                                <p><strong>Payment ID:</strong> {item.paymentId || 'N/A'}</p>
+                                                                <p><strong>Date:</strong> {item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}</p>
                                                             </>
-                                                        ) : selectedCategory === 'reports' ? (
+                                                        )}
+                                                        {selectedCategory === 'reports' && (
                                                             <>
-                                                                <h3>{item.informant || 'Anonymous'}</h3>
-                                                                <p>Description: {item.description || 'No description'}</p>
-                                                                <p>Location: {item.locationDescription || 'Location not specified'}</p>
-                                                                <p>Contact: {item.contact || 'No contact provided'}</p>
-                                                                <p>Date: {new Date(item.timestamp?.toDate()).toLocaleDateString()}</p>
+                                                                <p><strong>Reporter:</strong> {item.informant || 'Anonymous'}</p>
+                                                                <p><strong>Contact:</strong> {item.contact || 'N/A'}</p>
+                                                                <p><strong>Description:</strong> {item.description || 'N/A'}</p>
+                                                                <p><strong>Location:</strong> {item.locationDescription || 'N/A'}</p>
+                                                                <p><strong>Status:</strong> {item.status || 'pending'}</p>
+                                                                <p><strong>Date:</strong> {item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}</p>
                                                             </>
-                                                        ) : selectedCategory === 'help' ? (
+                                                        )}
+                                                        {selectedCategory === 'help' && (
                                                             <>
-                                                                <h3>{item.ngoName || 'NGO Name Not Provided'}</h3>
-                                                                <p>Description: {item.descriptionOfHelp || 'No description provided'}</p>
-                                                                <p>NGO Address: {item.ngoAddress || 'Address not specified'}</p>
-                                                                <p>Date: {new Date(item.timestamp?.toDate()).toLocaleDateString()}</p>
+                                                                <p><strong>NGO Name:</strong> {item.ngoName || 'N/A'}</p>
+                                                                <p><strong>Help Desc:</strong> {item.descriptionOfHelp || 'N/A'}</p>
+                                                                <p><strong>NGO Address:</strong> {item.ngoAddress || 'N/A'}</p>
+                                                                <p><strong>Report ID:</strong> {item.reportId || 'N/A'}</p>
+                                                                <p><strong>Date:</strong> {item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}</p>
                                                             </>
-                                                        ) : (
+                                                        )}
+                                                        {selectedCategory === 'ngos' && (
                                                             <>
-                                                                <h3>{item.name || item.email || 'N/A'}</h3>
-                                                                <p>{item.description || item.address || ''}</p>
+                                                                <p><strong>Name:</strong> {item.name || 'N/A'}</p>
+                                                                <p><strong>Email:</strong> {item.email || 'N/A'}</p>
+                                                                <p><strong>Contact:</strong> {item.contact || 'N/A'}</p>
+                                                                <p><strong>Address:</strong> {item.address || 'N/A'}</p>
                                                             </>
+                                                        )}
+                                                        {selectedCategory === 'users' && (
+                                                            <>
+                                                                <p><strong>Name:</strong> {item.name || 'N/A'}</p>
+                                                                <p><strong>Email:</strong> {item.email || 'N/A'}</p>
+                                                                <p><strong>Contact:</strong> {item.contact || 'N/A'}</p>
+                                                            </>
+                                                        )}
+                                                         {selectedCategory === 'subscribers' && (
+                                                            <p><strong>Email:</strong> {item.email || 'N/A'}</p>
                                                         )}
                                                     </div>
                                                     <div className="item-actions">
-                                                        <button 
-                                                            onClick={() => setEditItem(item)}
-                                                            className="action-button"
-                                                        >
-                                                            <FaEdit />
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleDelete(item)}
-                                                            className="action-button"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
+                                                         {(selectedCategory === 'users' || selectedCategory === 'ngos' || selectedCategory === 'subscribers' || selectedCategory === 'donations') && (
+                                                            <button onClick={() => setEditItem({ ...item })} className="action-button edit-button" aria-label="Edit item"><FaEdit /></button>
+                                                        )}
+                                                        <button onClick={() => handleDelete(item)} className="action-button delete-button" aria-label="Delete item"><FaTrash /></button>
                                                     </div>
                                                 </>
                                             )}
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="no-data-message">No {selectedCategory} data available</p>
+                                    <p className="no-data-message">No {selectedCategory} found{searchTerm ? ' matching your search' : ''}.</p>
                                 )}
                             </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </div>
         </div>
