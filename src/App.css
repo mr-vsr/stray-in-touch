@@ -3780,7 +3780,7 @@ body {
 
 /* AdminDashboard Styles      */
 .admin-dashboard-container {
-  min-height: fit-content; /* Adjust based on actual header height */
+  min-height: fit-content;
   padding: 2rem;
   background: linear-gradient(135deg, var(--background-light), var(--primary-extra-light-orange));
   margin: 3rem;
@@ -3830,7 +3830,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px; /* Fixed size */
+  width: 50px;
   height: 50px;
   flex-shrink: 0;
 }
@@ -3873,6 +3873,7 @@ body {
   align-self: flex-start;
   text-decoration: none;
   margin-top: 1rem;
+  cursor: pointer;
 }
 
 .show-more-button:hover {
@@ -3882,20 +3883,17 @@ body {
   box-shadow: none;
 }
 
-
-/* Admin Modal Styles */
-.admin-modal {
+.admin-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: flex-start;
+  align-items: center; /* Changed from flex-start to center */
   justify-content: center;
   z-index: 1000;
-  padding: 2rem 1.5rem;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding: 1rem; /* Added some padding for small screens */
+  overflow-y: auto; /* Allow overlay scroll if content overflows significantly */
 }
 
 .admin-modal-content {
@@ -3907,8 +3905,8 @@ body {
   animation: dialogSlideIn 0.3s ease-out forwards;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 4rem);
-  margin-top: 0;
+  max-height: calc(100vh - 4rem); /* Limit height to leave space */
+  overflow: hidden; /* Prevent content overflow, rely on body scroll */
 }
 
 @keyframes dialogSlideIn {
@@ -3923,15 +3921,16 @@ body {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  background: linear-gradient(to bottom, var(--background-white), var(--background-light)); /* Subtle header gradient */
+  background: linear-gradient(to bottom, var(--background-white), var(--background-light));
 }
 .admin-modal-header h2 {
-   font-size: 1.2rem; /* Slightly smaller title */
+   font-size: 1.2rem;
    margin: 0;
    font-weight: 600;
    color: var(--text-dark);
 }
-.admin-modal-header .close-button {
+.admin-modal-close-button,
+.admin-modal-header .close-button { /* Target both possible class names */
    background: none;
    border: none;
    color: var(--text-gray);
@@ -3942,13 +3941,14 @@ body {
    font-size: 1.5rem;
    line-height: 1;
 }
+.admin-modal-close-button:hover,
 .admin-modal-header .close-button:hover {
   background: var(--border-extra-light);
   color: var(--text-dark);
 }
 
-.admin-modal-search {
-  padding: 1rem 3.5rem;
+.admin-modal-controls { /* Renamed from admin-modal-search for clarity */
+  padding: 1rem 1.5rem; /* Reduced vertical padding slightly */
   border-bottom: 1px solid var(--border-extra-light);
   flex-shrink: 0;
   background-color: var(--background-light);
@@ -3971,28 +3971,28 @@ body {
 
 .admin-modal-body {
   padding: 1.5rem;
-  overflow-y: auto;
-  flex-grow: 1;
-  background-color: var(--background-white); /* Ensure body background */
+  overflow-y: auto; /* Enable vertical scroll ONLY for the body */
+  flex-grow: 1; /* Allow body to fill available space */
+  background-color: var(--background-white);
 }
 
 .admin-item-card {
   background: var(--background-white);
   border: 1px solid var(--border-extra-light);
   border-radius: var(--radius-md);
-  padding: 2.25rem;
+  padding: 1.25rem; /* Adjusted padding */
   margin-bottom: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
   transition: var(--transition-base);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm); /* Reduced default shadow */
 }
 .admin-item-card:hover {
     background-color: var(--background-light);
     border-color: var(--border-light);
-    box-shadow: var(--shadow-md); /* Add shadow on hover */
+    box-shadow: var(--shadow-md);
 }
 .admin-item-card:last-child {
     margin-bottom: 0;
@@ -4004,6 +4004,11 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   word-break: break-word;
+}
+.item-details strong {
+  font-weight: 500;
+  color: var(--text-gray);
+  margin-right: 0.5em;
 }
 .item-details h3 {
     font-size: 1.1rem;
@@ -4025,8 +4030,8 @@ body {
 }
 
 .action-button {
-  background: var(--background-white); /* Match item card bg */
-  border: 1px solid var(--border-light);
+  background: transparent;
+  border: none;
   color: var(--text-gray);
   padding: 0.5rem;
   border-radius: var(--radius-sm);
@@ -4039,13 +4044,20 @@ body {
 .action-button:hover {
     background-color: var(--border-extra-light);
     color: var(--text-dark);
-    border-color: var(--border-medium);
 }
+
+.action-button.edit-button:hover {
+    color: var(--info-blue); /* Example color */
+}
+.action-button.delete-button:hover {
+    color: var(--danger-red); /* Example color */
+}
+
 .action-button svg {
    font-size: 1rem;
 }
 
-.edit-form {
+.admin-edit-form {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -4053,15 +4065,37 @@ body {
     padding: 1rem;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
-    background-color: var(--background-light); /* Light bg for edit form */
+    background-color: var(--background-light);
 }
-.edit-form .form-group {
+
+.admin-edit-form .form-group {
     margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
-.edit-form input {
+.admin-edit-form .form-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-gray);
+}
+
+.admin-edit-form input[type="text"],
+.admin-edit-form input[type="email"],
+.admin-edit-form input[type="number"] {
     padding: 0.75rem 1rem;
-    background-color: var(--background-white); /* Ensure white input bg */
+    background-color: var(--background-white);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    color: var(--text-dark);
 }
+.admin-edit-form input:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 3px var(--primary-light-orange);
+}
+
 .edit-actions {
     display: flex;
     gap: 1rem;
@@ -4076,18 +4110,17 @@ body {
     font-weight: 500;
     transition: var(--transition-base);
 }
-/* Style first button (Save) as primary */
-.edit-actions button:first-of-type {
+
+.edit-actions button:first-of-type { /* Save button */
     background: var(--primary-orange);
     color: white;
 }
 .edit-actions button:first-of-type:hover {
     background: var(--primary-orange-dark);
-    box-shadow: var(--shadow-button-hover);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
-/* Style second button (Cancel) as secondary */
-.edit-actions button:last-of-type {
+.edit-actions button:last-of-type { /* Cancel button */
     background: var(--background-white);
     color: var(--text-gray);
     border: 1px solid var(--border-light);
@@ -4095,7 +4128,46 @@ body {
 .edit-actions button:last-of-type:hover {
     background: var(--border-extra-light);
     border-color: var(--border-medium);
-     transform: translateY(-2px);
+    transform: translateY(-1px);
+}
+
+.no-data-message {
+    text-align: center;
+    color: var(--text-gray);
+    padding: 2rem;
+    font-style: italic;
+}
+
+.error-message-card {
+    background-color: var(--danger-light);
+    color: var(--danger-red);
+    border: 1px solid var(--danger-red);
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+.error-message-card h2 i {
+    margin-right: 0.5rem;
+}
+.error-message-card button {
+    margin-top: 1rem;
+}
+
+.error-message-inline {
+    background-color: var(--danger-light);
+    color: var(--danger-red);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+
+.centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh; /* Ensure container takes height */
 }
 
 /* Responsive */
@@ -4103,11 +4175,13 @@ body {
     .admin-modal-body { padding: 1rem; }
     .admin-item-card { flex-direction: column; align-items: stretch;}
     .item-actions { justify-content: flex-end; margin-top: 0.75rem;}
-    .admin-modal { padding: 1rem; padding-top: 2rem; }
-    .admin-modal-content { max-height: calc(100vh - 4rem); }
+    .admin-modal-overlay { padding: 1rem; } /* Adjust overlay padding */
+    .admin-modal-content { max-height: calc(100vh - 2rem); } /* Adjust max height */
 }
 
 @media (max-width: 480px) {
+    .admin-dashboard-container { padding: 1rem; margin: 1rem; }
+    .admin-dashboard-stats-grid { gap: 1rem; }
     .admin-modal-header h2 { font-size: 1.1rem; }
     .admin-modal-body { padding: 0.75rem; }
     .admin-item-card { padding: 0.75rem; }
@@ -4115,8 +4189,8 @@ body {
     .item-details p { font-size: 0.85rem; }
     .edit-actions { flex-direction: column; gap: 0.5rem; }
     .edit-actions button { width: 100%; }
-    .admin-modal { padding: 0.5rem; padding-top: 1rem; }
-    .admin-modal-content { max-height: calc(100vh - 2rem); border-radius: var(--radius-md); }
+    .admin-modal-overlay { padding: 0.5rem; } /* Further adjust overlay padding */
+    .admin-modal-content { max-height: calc(100vh - 1rem); border-radius: var(--radius-md); } /* Adjust max height */
 }
 
 

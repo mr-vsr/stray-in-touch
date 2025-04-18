@@ -516,7 +516,7 @@ const AdminDashboard = () => {
                                                         {selectedCategory === 'donations' && (
                                                             <>
                                                                 <p><strong>Amount:</strong> ₹{item.amount?.toLocaleString('en-IN')}</p>
-                                                                <p><strong>User:</strong> {item.userName || 'N/A'}</p>
+                                                                <p><strong>User:</strong> {item.name || 'N/A'}</p>
                                                                 <p><strong>Email:</strong> {item.email || 'N/A'}</p>
                                                                 <p><strong>Payment ID:</strong> {item.paymentId || 'N/A'}</p>
                                                                 <p><strong>Date:</strong> {item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A'}</p>

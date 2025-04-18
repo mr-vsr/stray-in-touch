@@ -31,14 +31,12 @@ function Donations() {
             setIsLoggedIn(true);
             setDonationData(prev => ({
                 ...prev,
-                name: user.displayName || user.name || '', // Fallback to name if displayName missing
+                name: user.displayName || user.name || '',
                 email: user.email || '',
-                // *** FIX: Use user.contact instead of user.phoneNumber ***
                 phone: user.contact || ''
             }));
         } else {
             setIsLoggedIn(false);
-             // Clear fields if user logs out
              setDonationData(prev => ({
                 ...prev,
                 name: '',
@@ -65,7 +63,6 @@ function Donations() {
         setShowPaymentDialog(true);
 
         try {
-            // Use donationData directly as it holds the latest state
             const dataToSave = {
                 name: donationData.name,
                 email: donationData.email,
